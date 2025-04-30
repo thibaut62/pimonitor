@@ -1,0 +1,3 @@
+nohup: ignoring input
+Serveur API démarré sur http://0.0.0.0:3000
+WebSocket démarré sur ws://0.0.0.0:3000
