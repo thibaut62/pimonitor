@@ -148,8 +148,8 @@ app.get('/api/dateinfo', (req, res) => {
 app.get('/api/weather', async (req, res) => {
   try {
     // URL précise pour la météo d'Arras (50.296, 2.813)
-    const url = 'https://api.open-meteo.com/v1/forecast?latitude=50.296&longitude=2.813&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min&timezone=Europe%2FParis';
-    
+    //const url = "https://api.open-meteo.com/v1/forecast?latitude=50.2945&longitude=2.8070&daily=temperature_2m_max,temperature_2m_min&timezone=Europe%2FBerlin&forecast_days=1";
+    const url = "https://api.open-meteo.com/v1/forecast?latitude=50.2945&longitude=2.8070&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,pressure_msl,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min&timezone=Europe%2FBerlin&forecast_days=1";
     // Ajouter un timestamp pour éviter la mise en cache
     const fullUrl = `${url}&_=${Date.now()}`;
     

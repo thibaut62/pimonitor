@@ -33,74 +33,77 @@
             </div>
         </header>
 
-        <!-- Bloc pour la date et météo -->
-        <div class="row mb-4">
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-body" id="date-info">
-                        Chargement des informations de date...
+                <!-- Bloc pour la date et météo -->
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-body" id="date-info">
+                                Chargement des informations de date...
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-  <i class="fas fa-cloud me-2"></i> Météo Saint Laurent Blangy
-  <button id="refresh-weather" class="btn btn-sm btn-outline-light float-end me-2" title="Rafraîchir les données météo">
-    <i class="fas fa-sync-alt"></i>
-  </button>
-  <div class="drag-handle"><i class="fas fa-grip-horizontal"></i></div>
-</div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
 
-<div class="card-body">
-  <div id="weather-error" class="alert alert-danger" style="display: none;"></div>
-  
-  <div class="d-flex align-items-center mb-3">
-    <div class="me-3">
-      <i id="weather-icon" class="wi wi-day-sunny display-4"></i>
+        <!-- Widget météo amélioré à intégrer dans index.html -->
+<div class="card">
+    <div class="card-header">
+      <i class="fas fa-cloud me-2"></i> Météo <span id="weather-city">Saint Laurent Blangy</span>
+      <button id="refresh-weather" class="btn btn-sm btn-outline-light float-end" title="Rafraîchir les données météo">
+        <i class="fas fa-sync-alt"></i>
+      </button>
     </div>
-    <div>
-      <div id="weather-city" class="h5 mb-0">Saint Laurent Blangy</div>
-      <div id="weather-temp" class="display-4 fw-bold">--°C</div>
-      <div id="weather-desc" class="text-muted">--</div>
+  
+    <div class="card-body">
+      <div id="weather-error" class="alert alert-danger" style="display: none;"></div>
+      
+      <div class="d-flex align-items-center mb-3">
+        <div class="me-3">
+          <i id="weather-icon" class="fas fa-sun display-4"></i>
+        </div>
+        <div>
+          <div id="weather-temp" class="display-4 fw-bold">--°C</div>
+          <div id="weather-desc" class="text-muted">--</div>
+        </div>
+      </div>
+      
+      <div class="row mt-3">
+        <div class="col-6">
+          <div class="mb-2">
+            <i class="fas fa-thermometer-half me-2"></i> Ressenti: 
+            <span id="weather-feels" class="fw-bold">--°C</span>
+          </div>
+          <div class="mb-2">
+            <i class="fas fa-tint me-2"></i> Humidité: 
+            <span id="weather-humidity" class="fw-bold">--%</span>
+          </div>
+          <div class="mb-2">
+            <i class="fas fa-arrow-up me-2"></i> Max: 
+            <span id="weather-temp-max" class="fw-bold">--°C</span>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="mb-2">
+            <i class="fas fa-wind me-2"></i> Vent: 
+            <span id="weather-wind" class="fw-bold">-- m/s</span>
+          </div>
+          <div class="mb-2">
+            <i class="fas fa-tachometer-alt me-2"></i> Pression: 
+            <span id="weather-pressure" class="fw-bold">-- hPa</span>
+          </div>
+          <div class="mb-2">
+            <i class="fas fa-arrow-down me-2"></i> Min: 
+            <span id="weather-temp-min" class="fw-bold">--°C</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <div class="card-footer text-muted">
+      <small>Dernière mise à jour: <span id="weather-last-update">--:--:--</span></small>
     </div>
   </div>
-  
-  <div class="row mt-3">
-    <div class="col-6">
-      <div class="mb-2">
-        <i class="fas fa-thermometer-half me-2"></i> Ressenti: 
-        <span id="weather-feels" class="fw-bold">--°C</span>
-      </div>
-      <div class="mb-2">
-        <i class="fas fa-tint me-2"></i> Humidité: 
-        <span id="weather-humidity" class="fw-bold">--%</span>
-      </div>
-      <div class="mb-2">
-        <i class="fas fa-arrow-up me-2"></i> Max: 
-        <span id="weather-temp-max" class="fw-bold">--°C</span>
-      </div>
-    </div>
-    <div class="col-6">
-      <div class="mb-2">
-        <i class="fas fa-wind me-2"></i> Vent: 
-        <span id="weather-wind" class="fw-bold">-- m/s</span>
-      </div>
-      <div class="mb-2">
-        <i class="fas fa-tachometer-alt me-2"></i> Pression: 
-        <span id="weather-pressure" class="fw-bold">-- hPa</span>
-      </div>
-      <div class="mb-2">
-        <i class="fas fa-arrow-down me-2"></i> Min: 
-        <span id="weather-temp-min" class="fw-bold">--°C</span>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="card-footer text-muted">
-  <small>Dernière mise à jour: <span id="weather-last-update">--:--:--</span></small>
-</div>
                     
                 </div>
             </div>

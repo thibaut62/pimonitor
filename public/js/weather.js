@@ -3,8 +3,8 @@ window.WeatherModule = (function() {
     // Configuration
     const config = {
         refreshInterval: 900000, // 15 minutes en ms
-        apiEndpoint: '/api/weather',
-        refreshEndpoint: '/api/weather/refresh'
+        apiEndpoint: 'weather',        // Sans /api/
+        refreshEndpoint: 'weather/refresh' // Sans /api/
     };
     
     let refreshTimer = null;
@@ -20,17 +20,17 @@ window.WeatherModule = (function() {
         if (!data) return;
         
         // Sélecteurs principaux
-        const cityEl = document.getElementById('weather-city') || document.querySelector('.weather-city');
-        const tempEl = document.getElementById('weather-temp') || document.querySelector('.weather-temp');
-        const descEl = document.getElementById('weather-desc') || document.querySelector('.weather-desc');
-        const feelsEl = document.getElementById('weather-feels') || document.querySelector('.weather-feels');
-        const humidityEl = document.getElementById('weather-humidity') || document.querySelector('.weather-humidity');
-        const windEl = document.getElementById('weather-wind') || document.querySelector('.weather-wind');
-        const pressureEl = document.getElementById('weather-pressure') || document.querySelector('.weather-pressure');
-        const updateEl = document.getElementById('weather-last-update') || document.querySelector('.weather-last-update');
-        const iconEl = document.getElementById('weather-icon') || document.querySelector('.weather-icon');
-        const tempMaxEl = document.getElementById('weather-temp-max') || document.querySelector('.weather-temp-max');
-        const tempMinEl = document.getElementById('weather-temp-min') || document.querySelector('.weather-temp-min');
+        const cityEl = document.getElementById('weather-city');
+        const tempEl = document.getElementById('weather-temp');
+        const descEl = document.getElementById('weather-desc');
+        const feelsEl = document.getElementById('weather-feels');
+        const humidityEl = document.getElementById('weather-humidity');
+        const windEl = document.getElementById('weather-wind');
+        const pressureEl = document.getElementById('weather-pressure');
+        const updateEl = document.getElementById('weather-last-update');
+        const iconEl = document.getElementById('weather-icon');
+        const tempMaxEl = document.getElementById('weather-temp-max');
+        const tempMinEl = document.getElementById('weather-temp-min');
         
         // Mise à jour des éléments s'ils existent
         if (cityEl) cityEl.textContent = data.city;
@@ -52,21 +52,40 @@ window.WeatherModule = (function() {
             const iconClass = `wi-owm-${data.icon}`;
             iconEl.className = 'wi ' + iconClass;
             
-            // Alternative: si vous utilisez des images
-            // iconEl.src = `http://openweathermap.org/img/wn/${data.icon}@2x.png`;
+            // Alternative: si vous utilisez des icônes Font Awesome
+            // Déterminer l'icône Font Awesome appropriée selon le code météo
+            let faIcon = 'fa-sun';
+            if (data.icon.includes('01')) faIcon = 'fa-sun';
+            else if (data.icon.includes('02')) faIcon = 'fa-cloud-sun';
+            else if (data.icon.includes('03') || data.icon.includes('04')) faIcon = 'fa-cloud';
+            else if (data.icon.includes('09')) faIcon = 'fa-cloud-showers-heavy';
+            else if (data.icon.includes('10')) faIcon = 'fa-cloud-rain';
+            else if (data.icon.includes('11')) faIcon = 'fa-bolt';
+            else if (data.icon.includes('13')) faIcon = 'fa-snowflake';
+            else if (data.icon.includes('50')) faIcon = 'fa-smog';
+            
+            iconEl.className = 'fas ' + faIcon + ' display-4';
         }
         
-        console.log('Interface météo mise à jour avec les nouvelles données');
+        // Masquer le message d'erreur s'il existe
+        const errorContainer = document.getElementById('weather-error');
+        if (errorContainer) {
+            errorContainer.style.display = 'none';
+        }
     };
     
     // Récupérer les données météo depuis l'API
     const fetchWeather = async function(forceRefresh = false) {
+        console.log('API_BASE_URL:', window.DashboardUtils.config.API_BASE_URL);
         try {
             // Déterminer l'endpoint à utiliser
             const endpoint = forceRefresh ? config.refreshEndpoint : config.apiEndpoint;
             
             // Ajouter un paramètre timestamp pour éviter la mise en cache
-            const url = `${endpoint}?_t=${Date.now()}`;
+            // Utiliser des URL absolues plutôt que relatives
+            const url = forceRefresh 
+                ? 'http://192.168.0.2:3000/api/weather/refresh?_t=' + Date.now() 
+                : 'http://192.168.0.2:3000/api/weather?_t=' + Date.now();
             
             // Effectuer la requête
             const response = await fetch(url);
@@ -90,7 +109,7 @@ window.WeatherModule = (function() {
             console.error('Erreur lors de la récupération des données météo:', error);
             
             // Afficher un message d'erreur dans l'interface
-            const errorContainer = document.getElementById('weather-error') || document.querySelector('.weather-error');
+            const errorContainer = document.getElementById('weather-error');
             if (errorContainer) {
                 errorContainer.textContent = `Erreur: ${error.message}`;
                 errorContainer.style.display = 'block';
@@ -135,24 +154,20 @@ window.WeatherModule = (function() {
         refreshTimer = setTimeout(() => fetchWeather(), config.refreshInterval);
     };
     
+    // Fonction publique pour charger la météo
+    const loadWeather = async function() {
+        await fetchWeather();
+        resetRefreshTimer();
+    };
+    
     // Initialiser le module météo
     const init = function() {
         console.log('Initialisation du module météo');
-        
-        // Récupérer les données initiales
-        fetchWeather();
-        
-        // Configurer le rafraîchissement périodique
-        resetRefreshTimer();
-        
         // Ajouter un gestionnaire d'événements pour le bouton de rafraîchissement
         const refreshButton = document.getElementById('refresh-weather');
         if (refreshButton) {
             refreshButton.addEventListener('click', handleRefreshClick);
         }
-        
-        // Exposer l'API pour le débogage
-        window.refreshWeather = handleRefreshClick;
     };
     
     // Appeler init au chargement du DOM
@@ -160,8 +175,7 @@ window.WeatherModule = (function() {
     
     // API publique
     return {
-        refresh: handleRefreshClick,
-        fetchWeather: fetchWeather,
-        updateUI: updateUI
+        loadWeather: loadWeather,
+        refresh: handleRefreshClick
     };
 })();

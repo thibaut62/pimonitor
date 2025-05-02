@@ -122,55 +122,91 @@ function initWebSocket() {
     state.websocket = ws;
 }
 
-// Fonction d'initialisation principale
 function init() {
     logDebug('Initialisation du tableau de bord');
     
     // Charger les informations de date et saint du jour
-    if (window.DateInfoModule) {
+    if (window.DateInfoModule && typeof window.DateInfoModule.loadDateInfo === 'function') {
         window.DateInfoModule.loadDateInfo();
         setInterval(window.DateInfoModule.loadDateInfo, config.UPDATE_INTERVAL.DATEINFO);
+    } else {
+        logError('Module DateInfoModule manquant ou incomplet');
     }
     
     // Charger les prévisions météo
-    if (window.WeatherModule) {
+    if (window.WeatherModule && typeof window.WeatherModule.loadWeather === 'function') {
         window.WeatherModule.loadWeather();
         setInterval(window.WeatherModule.loadWeather, config.UPDATE_INTERVAL.WEATHER);
+    } else {
+        logError('Module WeatherModule manquant ou incomplet');
     }
     
     // Charger les informations système
-    if (window.CPUModule && window.MemoryModule && window.StorageModule) {
+    if (window.CPUModule && typeof window.CPUModule.loadCPUInfo === 'function') {
         window.CPUModule.loadCPUInfo();
+    } else {
+        logError('Module CPUModule manquant ou incomplet');
+    }
+
+    if (window.MemoryModule && typeof window.MemoryModule.loadMemoryInfo === 'function') {
         window.MemoryModule.loadMemoryInfo();
+    } else {
+        logError('Module MemoryModule manquant ou incomplet');
+    }
+
+    if (window.StorageModule && typeof window.StorageModule.loadStorageInfo === 'function') {
         window.StorageModule.loadStorageInfo();
+    } else {
+        logError('Module StorageModule manquant ou incomplet');
     }
     
     // Charger les conteneurs Docker
-    if (window.DockerModule) {
+    if (window.DockerModule && typeof window.DockerModule.loadDockerContainers === 'function') {
         window.DockerModule.loadDockerContainers();
         setInterval(window.DockerModule.loadDockerContainers, config.UPDATE_INTERVAL.DOCKER);
+    } else {
+        logError('Module DockerModule manquant ou incomplet');
     }
     
     // Charger les informations EarnApp
-    if (window.EarnAppModule) {
+    if (window.EarnAppModule && typeof window.EarnAppModule.loadEarnAppStatus === 'function') {
         window.EarnAppModule.loadEarnAppStatus();
         setInterval(window.EarnAppModule.loadEarnAppStatus, config.UPDATE_INTERVAL.EARNAPP);
+    } else {
+        logError('Module EarnAppModule manquant ou incomplet');
     }
     
     // Charger les clients VPN
-    if (window.VPNModule) {
+    if (window.VPNModule && typeof window.VPNModule.loadVPNClients === 'function') {
         window.VPNModule.loadVPNClients();
         setInterval(window.VPNModule.loadVPNClients, config.UPDATE_INTERVAL.VPN);
+    } else {
+        logError('Module VPNModule manquant ou incomplet');
     }
     
     // Initialiser les WebSockets
     initWebSocket();
     
     // Gestionnaires d'événements pour les boutons de rafraîchissement
-    document.getElementById('refresh-docker')?.addEventListener('click', window.DockerModule?.loadDockerContainers);
-    document.getElementById('refresh-earnapp')?.addEventListener('click', window.EarnAppModule?.loadEarnAppStatus);
-    document.getElementById('refresh-vpn')?.addEventListener('click', window.VPNModule?.loadVPNClients);
-    document.getElementById('refresh-weather')?.addEventListener('click', window.WeatherModule?.loadWeather);
+    const refreshDocker = document.getElementById('refresh-docker');
+    if (refreshDocker && window.DockerModule) {
+        refreshDocker.addEventListener('click', window.DockerModule.loadDockerContainers);
+    }
+    
+    const refreshEarnapp = document.getElementById('refresh-earnapp');
+    if (refreshEarnapp && window.EarnAppModule) {
+        refreshEarnapp.addEventListener('click', window.EarnAppModule.loadEarnAppStatus);
+    }
+    
+    const refreshVpn = document.getElementById('refresh-vpn');
+    if (refreshVpn && window.VPNModule) {
+        refreshVpn.addEventListener('click', window.VPNModule.loadVPNClients);
+    }
+    
+    const refreshWeather = document.getElementById('refresh-weather');
+    if (refreshWeather && window.WeatherModule) {
+        refreshWeather.addEventListener('click', window.WeatherModule.refresh);
+    }
 }
 
 // Initialiser lorsque le DOM est chargé
