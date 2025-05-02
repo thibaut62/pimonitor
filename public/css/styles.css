@@ -1,0 +1,72 @@
+/* styles.css - Styles pour le tableau de bord Raspberry Pi */
+body {
+    padding-top: 20px;
+    background-color: #f5f5f5;
+}
+.card {
+    margin-bottom: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+.card-header {
+    background-color: #6c757d;
+    color: white;
+    font-weight: bold;
+    border-radius: 10px 10px 0 0;
+}
+.metric {
+    text-align: center;
+    padding: 15px;
+}
+.metric-value {
+    font-size: 24px;
+    font-weight: bold;
+}
+.metric-label {
+    font-size: 14px;
+    color: #6c757d;
+}
+.chart-container {
+    position: relative;
+    height: 250px;
+    width: 100%;
+}
+.info-badge {
+    font-size: 14px;
+    padding: 8px 12px;
+    border-radius: 20px;
+    background-color: #f8f9fa;
+    color: #212529;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-right: 10px;
+}
+.date-info {
+    margin-bottom: 20px;
+    padding: 15px;
+    border-radius: 10px;
+    background-color: #fff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+.weather-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.weather-icon {
+    width: 64px;
+    height: 64px;
+}
+.weather-temp {
+    font-size: 28px;
+    font-weight: bold;
+}
+.vpn-client {
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    border-left: 4px solid #28a745;
+}
+.vpn-client.disconnected {
+    border-left-color: #dc3545;
+}

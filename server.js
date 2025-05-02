@@ -7,6 +7,11 @@ const WebSocket = require('ws');
 const http = require('http');
 const { promisify } = require('util');
 const execPromise = promisify(exec);
+const fetch = require('node-fetch'); // Pour les requêtes HTTP externes (météo)
+const fs = require('fs'); // Pour lire le fichier des saints du jour
+const path = require('path');
+const axios = require('axios');
+
 
 const app = express();
 const port = 3000;
@@ -23,6 +28,242 @@ app.use(express.static('public'));
 // Route pour tester que l'API fonctionne
 app.get('/api/status', (req, res) => {
   res.json({ status: 'online', time: new Date().toISOString() });
+});
+
+// Route pour obtenir les clients VPN connectés - Version corrigée
+app.get('/api/vpn', (req, res) => {
+  exec('pivpn -c', (error, stdout, stderr) => {
+    if (error) {
+      console.error(`Erreur lors de l'exécution de pivpn -c: ${error}`);
+      return res.status(500).json({ error: 'Erreur lors de la récupération des clients VPN' });
+    }
+    
+    // Analyse de la sortie pivpn -c pour extraire les clients connectés
+    const lines = stdout.trim().split('\n');
+    const clients = [];
+    let isClientSection = false;
+    
+    for (const line of lines) {
+      // Détecter le début de la section des clients connectés
+      if (line.includes('Connected Clients List')) {
+        isClientSection = true;
+        continue;
+      }
+      
+      // Détecter la fin de la section des clients connectés
+      if (isClientSection && line.includes('Disabled clients')) {
+        isClientSection = false;
+        continue;
+      }
+      
+      // Ignorer les lignes d'en-tête
+      if (isClientSection && line.includes('Name') && line.includes('Remote IP')) {
+        continue;
+      }
+      
+      // Traiter les lignes de clients
+      if (isClientSection && line.trim() !== '') {
+        // Diviser par espaces mais en préservant les espaces dans les colonnes
+        const parts = line.trim().split(/\s+/);
+        
+        // Format observé: "Name Remote_IP Virtual_IP Bytes_Received Bytes_Sent Last_Seen Date_Time"
+        // Exemple: "pixel7 37.166.242.57:54054 10.235.9.2... 86MiB 836MiB May 01 2025 - 10:30:23"
+        
+        if (parts.length >= 7) {
+          const name = parts[0];
+          const remoteIP = parts[1];
+          const virtualIP = parts[2];
+          const bytesReceived = parts[3];
+          const bytesSent = parts[4];
+          
+          // Récupérer la date qui peut contenir des espaces
+          const lastSeenParts = parts.slice(5);
+          const lastSeen = lastSeenParts.join(' ');
+          
+          clients.push({
+            name,
+            remoteIP,
+            virtualIP,
+            bytesReceived,
+            bytesSent,
+            lastSeen
+          });
+        }
+      }
+    }
+    
+    res.json({ clients });
+  });
+});
+
+// Route pour obtenir les informations de date et saint du jour
+app.get('/api/dateinfo', (req, res) => {
+  try {
+    // Date du jour
+    const today = new Date();
+    const dateString = today.toLocaleDateString('fr-FR', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    
+    // Format de la clé pour chercher le saint du jour (MM-DD)
+    const monthDay = `${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
+    
+    // Lire le fichier JSON des saints
+    fs.readFile(path.join(__dirname, 'data', 'saints.json'), 'utf8', (err, data) => {
+      if (err) {
+        console.error('Erreur lors de la lecture du fichier des saints:', err);
+        // En cas d'erreur, on envoie quand même une réponse avec la date
+        return res.json({
+          date: dateString,
+          saint: 'Information non disponible'
+        });
+      }
+      
+      try {
+        const saints = JSON.parse(data);
+        const saint = saints[monthDay] || 'Aucune fête particulière';
+        
+        res.json({
+          date: dateString,
+          saint: saint
+        });
+      } catch (parseError) {
+        console.error('Erreur de parsing du fichier JSON des saints:', parseError);
+        res.json({
+          date: dateString,
+          saint: 'Information non disponible'
+        });
+      }
+    });
+  } catch (error) {
+    console.error('Erreur lors de la récupération des informations de date:', error);
+    res.status(500).json({ error: 'Erreur lors de la récupération des informations de date' });
+  }
+});
+
+// Route pour récupérer les données météo
+app.get('/api/weather', async (req, res) => {
+  try {
+    // URL précise pour la météo d'Arras (50.296, 2.813)
+    const url = 'https://api.open-meteo.com/v1/forecast?latitude=50.296&longitude=2.813&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min&timezone=Europe%2FParis';
+    
+    // Ajouter un timestamp pour éviter la mise en cache
+    const fullUrl = `${url}&_=${Date.now()}`;
+    
+    // Récupérer les données de l'API
+    const response = await axios.get(fullUrl);
+    const data = response.data;
+    
+    // Convertir le code météo en description
+    const weatherCode = data.current?.weather_code || 0;
+    let description = 'Indéterminé';
+    let icon = '01d'; // Icône par défaut
+    
+    // Table de correspondance des codes météo
+    const weatherCodes = {
+      0: { desc: 'ciel dégagé', icon: '01d' },
+      1: { desc: 'principalement dégagé', icon: '01d' },
+      2: { desc: 'partiellement nuageux', icon: '02d' },
+      3: { desc: 'nuageux', icon: '03d' },
+      45: { desc: 'brouillard', icon: '50d' },
+      48: { desc: 'brouillard givrant', icon: '50d' },
+      51: { desc: 'bruine légère', icon: '09d' },
+      53: { desc: 'bruine modérée', icon: '09d' },
+      55: { desc: 'bruine dense', icon: '09d' },
+      56: { desc: 'bruine verglaçante légère', icon: '09d' },
+      57: { desc: 'bruine verglaçante dense', icon: '09d' },
+      61: { desc: 'pluie légère', icon: '10d' },
+      63: { desc: 'pluie modérée', icon: '10d' },
+      65: { desc: 'pluie forte', icon: '10d' },
+      66: { desc: 'pluie verglaçante légère', icon: '10d' },
+      67: { desc: 'pluie verglaçante forte', icon: '10d' },
+      71: { desc: 'chute de neige légère', icon: '13d' },
+      73: { desc: 'chute de neige modérée', icon: '13d' },
+      75: { desc: 'chute de neige forte', icon: '13d' },
+      77: { desc: 'grains de neige', icon: '13d' },
+      80: { desc: 'averses de pluie légères', icon: '09d' },
+      81: { desc: 'averses de pluie modérées', icon: '09d' },
+      82: { desc: 'averses de pluie violentes', icon: '09d' },
+      85: { desc: 'averses de neige légères', icon: '13d' },
+      86: { desc: 'averses de neige fortes', icon: '13d' },
+      95: { desc: 'orage', icon: '11d' },
+      96: { desc: 'orage avec grêle légère', icon: '11d' },
+      99: { desc: 'orage avec grêle forte', icon: '11d' }
+    };
+    
+    if (weatherCodes[weatherCode]) {
+      description = weatherCodes[weatherCode].desc;
+      icon = weatherCodes[weatherCode].icon;
+    }
+    
+    // Formater les données pour votre interface
+    const formattedData = {
+      city: 'Saint Laurent Blangy',
+      temperature: data.current?.temperature_2m || 0,
+      description: description,
+      icon: icon,
+      humidity: data.current?.relative_humidity_2m || 0,
+      wind_speed: data.current?.wind_speed_10m || 0,
+      wind_deg: data.current?.wind_direction_10m || 0,
+      pressure: data.current?.pressure_msl || 0,
+      feels_like: data.current?.apparent_temperature || 0,
+      temp_max: data.daily?.temperature_2m_max?.[0] || 0,
+      temp_min: data.daily?.temperature_2m_min?.[0] || 0,
+      timestamp: Date.now()
+    };
+    
+    // Sauvegarder dans un fichier pour accès hors ligne
+    const dataDir = path.join(__dirname, 'data');
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+    
+    fs.writeFileSync(
+      path.join(dataDir, 'weather-data.json'),
+      JSON.stringify(formattedData),
+      'utf8'
+    );
+    
+    // Envoyer les données formatées
+    res.json(formattedData);
+  } catch (error) {
+    console.error('Erreur lors de la récupération des données météo:', error);
+    
+    // Essayer de lire les données sauvegardées si disponibles
+    try {
+      const cachedData = fs.readFileSync(
+        path.join(__dirname, 'data', 'weather-data.json'),
+        'utf8'
+      );
+      res.json(JSON.parse(cachedData));
+    } catch (fsError) {
+      res.status(500).json({ 
+        error: true, 
+        message: "Impossible de récupérer les données météo",
+        details: error.message
+      });
+    }
+  }
+});
+
+// Route pour forcer un rafraîchissement des données météo
+app.get('/api/weather/refresh', async (req, res) => {
+  try {
+    // Supprimer le fichier de cache s'il existe
+    const cacheFile = path.join(__dirname, 'data', 'weather-data.json');
+    if (fs.existsSync(cacheFile)) {
+      fs.unlinkSync(cacheFile);
+    }
+    
+    // Rediriger vers la route normale
+    res.redirect('/api/weather');
+  } catch (error) {
+    console.error('Erreur lors du rafraîchissement des données météo:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Route pour obtenir les informations système (CPU, mémoire, etc.)
@@ -262,6 +503,121 @@ app.get('/api/docker/:containerId/network', async (req, res) => {
     } catch (error) {
       console.error('Erreur lors de la récupération des stats réseau pour EarnApp:', error);
       res.status(500).json({ error: 'Erreur lors de la récupération des statistiques réseau' });
+    }
+  });
+  
+  app.get('/api/pivpn', async (req, res) => {
+    try {
+      // Récupération du statut PiVPN
+      const { stdout: pivpnStatus } = await execPromise('pivpn -c');
+      
+      // Récupération des informations DNS
+      const { stdout: dnsInfo } = await execPromise('cat /etc/pivpn/openvpn/setupVars.conf | grep DNS');
+      
+      // Préparation des données
+      const clients = [];
+      let dnsServer = 'Non configuré';
+      
+      // Traitement des clients connectés
+      if (pivpnStatus) {
+        const lines = pivpnStatus.split('\n');
+        let isClientSection = false;
+        
+        for (const line of lines) {
+          if (line.includes('Name') && line.includes('Remote IP') && line.includes('Virtual IP')) {
+            isClientSection = true;
+            continue;
+          }
+          
+          if (isClientSection && line.trim() && !line.includes('::: ')) {
+            const parts = line.trim().split(/\s+/);
+            if (parts.length >= 3) {
+              clients.push({
+                name: parts[0],
+                remoteIP: parts[1],
+                virtualIP: parts[2],
+                connected: true,
+                lastSeen: 'Now'
+              });
+            }
+          }
+        }
+      }
+      
+      // Récupération de tous les clients (y compris déconnectés)
+      const { stdout: allClients } = await execPromise('pivpn -l');
+      if (allClients) {
+        const lines = allClients.split('\n');
+        let isClientSection = false;
+        
+        for (const line of lines) {
+          if (line.includes('Name') && line.includes('Status')) {
+            isClientSection = true;
+            continue;
+          }
+          
+          if (isClientSection && line.trim() && !line.includes('::: ')) {
+            const parts = line.trim().split(/\s+/);
+            if (parts.length >= 3) {
+              const name = parts[0];
+              // Vérifier si le client n'est pas déjà dans la liste des connectés
+              const existingClient = clients.find(c => c.name === name);
+              if (!existingClient) {
+                // Ajouter le client déconnecté
+                clients.push({
+                  name: name,
+                  remoteIP: 'N/A',
+                  virtualIP: 'N/A',
+                  connected: false,
+                  lastSeen: parts.slice(2).join(' ')
+                });
+              }
+            }
+          }
+        }
+      }
+      
+      // Traitement des informations DNS
+      if (dnsInfo) {
+        const dnsMatch = dnsInfo.match(/DNS\d+=(.+)/);
+        if (dnsMatch && dnsMatch[1]) {
+          dnsServer = dnsMatch[1];
+        }
+      }
+      
+      // Récupération du serveur VPN et du port
+      let serverAddress = '';
+      let serverPort = '';
+      try {
+        const { stdout: serverInfo } = await execPromise('cat /etc/pivpn/openvpn/setupVars.conf | grep -E "pivpnHOST|PORT"');
+        const hostMatch = serverInfo.match(/pivpnHOST=(.+)/);
+        const portMatch = serverInfo.match(/PORT=(\d+)/);
+        
+        if (hostMatch && hostMatch[1]) {
+          serverAddress = hostMatch[1];
+        }
+        
+        if (portMatch && portMatch[1]) {
+          serverPort = portMatch[1];
+        }
+      } catch (error) {
+        console.error('Erreur lors de la récupération des informations serveur PiVPN:', error);
+      }
+      
+      res.json({
+        status: clients.length > 0 ? 'running' : 'unknown',
+        dnsServer,
+        serverAddress,
+        serverPort,
+        clientsCount: {
+          total: clients.length,
+          connected: clients.filter(c => c.connected).length
+        },
+        clients
+      });
+    } catch (error) {
+      console.error('Erreur lors de la récupération du statut PiVPN:', error);
+      res.status(500).json({ error: 'Erreur lors de la récupération du statut PiVPN' });
     }
   });
   
