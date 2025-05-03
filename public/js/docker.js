@@ -22,7 +22,7 @@ window.DockerModule = (function() {
             
             if (data.containers && data.containers.length > 0) {
                 data.containers.forEach(container => {
-                    const statusClass = container.status.includes('Up') ? 'success' : 'warning';
+                    const statusClass = container.status && container.status.toLowerCase().includes('up') ? 'success' : 'warning';
                     
                     const row = document.createElement('tr');
                     row.innerHTML = `
@@ -31,11 +31,7 @@ window.DockerModule = (function() {
                         <td><span class="badge bg-${statusClass}">${container.status}</span></td>
                         <td id="cpu-${container.id}">-</td>
                         <td id="mem-${container.id}">-</td>
-                        <td id="net-${container.id}">-</td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-info docker-stats" data-id="${container.id}">
-                                <i class="fas fa-chart-bar"></i>
-                            </button>
+
                         </td>
                     `;
                     containersList.appendChild(row);
@@ -52,7 +48,23 @@ window.DockerModule = (function() {
                     });
                 });
             } else {
-                containersList.innerHTML = '<tr><td colspan="7" class="text-center">Aucun conteneur Docker en cours d\'exécution</td></tr>';
+                const row = document.createElement('tr');
+                row.innerHTML = '<td colspan="7" class="text-center">Aucun conteneur Docker en cours d\'exécution</td>';
+                containersList.appendChild(row);
+            }
+            
+            // Mise à jour du compteur
+            const runningCounter = document.getElementById('docker-counter-running');
+            const totalCounter = document.getElementById('docker-counter-total');
+            
+            if (runningCounter && totalCounter) {
+                const running = data.containers ? data.containers.filter(c => c.status && c.status.toLowerCase().includes('up')).length : 0;
+                const total = data.containers ? data.containers.length : 0;
+                
+                runningCounter.textContent = running;
+                runningCounter.className = running > 0 ? 'badge bg-success ms-2' : 'badge bg-secondary ms-2';
+                
+                totalCounter.textContent = total;
             }
             
             window.DashboardUtils.updateTime();

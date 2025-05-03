@@ -46,64 +46,123 @@
                         <div class="card">
                             <div class="card-header">
 
-        <!-- Widget météo amélioré à intégrer dans index.html -->
-<div class="card">
-    <div class="card-header">
-      <i class="fas fa-cloud me-2"></i> Météo <span id="weather-city">Saint Laurent Blangy</span>
-      <button id="refresh-weather" class="btn btn-sm btn-outline-light float-end" title="Rafraîchir les données météo">
-        <i class="fas fa-sync-alt"></i>
-      </button>
-    </div>
-  
-    <div class="card-body">
-      <div id="weather-error" class="alert alert-danger" style="display: none;"></div>
-      
-      <div class="d-flex align-items-center mb-3">
-        <div class="me-3">
-          <i id="weather-icon" class="fas fa-sun display-4"></i>
-        </div>
-        <div>
-          <div id="weather-temp" class="display-4 fw-bold">--°C</div>
-          <div id="weather-desc" class="text-muted">--</div>
-        </div>
-      </div>
-      
-      <div class="row mt-3">
-        <div class="col-6">
-          <div class="mb-2">
-            <i class="fas fa-thermometer-half me-2"></i> Ressenti: 
-            <span id="weather-feels" class="fw-bold">--°C</span>
-          </div>
-          <div class="mb-2">
-            <i class="fas fa-tint me-2"></i> Humidité: 
-            <span id="weather-humidity" class="fw-bold">--%</span>
-          </div>
-          <div class="mb-2">
-            <i class="fas fa-arrow-up me-2"></i> Max: 
-            <span id="weather-temp-max" class="fw-bold">--°C</span>
-          </div>
-        </div>
-        <div class="col-6">
-          <div class="mb-2">
-            <i class="fas fa-wind me-2"></i> Vent: 
-            <span id="weather-wind" class="fw-bold">-- m/s</span>
-          </div>
-          <div class="mb-2">
-            <i class="fas fa-tachometer-alt me-2"></i> Pression: 
-            <span id="weather-pressure" class="fw-bold">-- hPa</span>
-          </div>
-          <div class="mb-2">
-            <i class="fas fa-arrow-down me-2"></i> Min: 
-            <span id="weather-temp-min" class="fw-bold">--°C</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  
-    <div class="card-footer text-muted">
-      <small>Dernière mise à jour: <span id="weather-last-update">--:--:--</span></small>
-    </div>
-  </div>
+                                <div class="card">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                      <div class="d-flex align-items-center">
+                                        <i class="fas fa-cloud me-2"></i> 
+                                        <span>Météo Saint Laurent Blangy</span>
+                                        <span id="weather-temp-collapsed" class="ms-3 fw-bold">28.8°C</span>
+                                      </div>
+                                      <div class="d-flex">
+                                        <button id="refresh-weather" class="btn btn-sm btn-outline-light me-2" title="Rafraîchir les données météo">
+                                          <i class="fas fa-sync-alt"></i>
+                                        </button>
+                                        <button id="weather-toggle-btn" class="btn btn-sm btn-outline-light" title="Réduire/Agrandir">
+                                          <i class="fas fa-plus"></i>
+                                        </button>
+                                      </div>
+                                    </div>
+                                    
+                                    <div id="weather-content" style="display: none;">
+                                      <div class="card-body">
+                                        <div id="weather-error" class="alert alert-danger" style="display: none;"></div>
+                                        
+                                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center">
+                                          <!-- Affichage principal -->
+                                          <div class="d-flex align-items-center mb-3 mb-md-0">
+                                            <div class="me-3">
+                                              <i id="weather-icon" class="fas fa-cloud display-5"></i>
+                                            </div>
+                                            <div>
+                                              <div id="weather-temp" class="display-4 fw-bold">28.8°C</div>
+                                              <div id="weather-desc" class="text-muted">partiellement nuageux</div>
+                                            </div>
+                                          </div>
+                                          
+                                          <!-- Affichage détails -->
+                                          <div class="d-flex flex-wrap justify-content-between">
+                                            <div class="me-4 mb-2">
+                                              <i class="fas fa-thermometer-half me-2"></i> Ressenti: 
+                                              <span id="weather-feels" class="fw-bold">28.9°C</span>
+                                            </div>
+                                            <div class="me-4 mb-2">
+                                              <i class="fas fa-tint me-2"></i> Humidité: 
+                                              <span id="weather-humidity" class="fw-bold">36%</span>
+                                            </div>
+                                            <div class="me-4 mb-2">
+                                              <i class="fas fa-wind me-2"></i> Vent: 
+                                              <span id="weather-wind" class="fw-bold">9.7 m/s</span>
+                                            </div>
+                                            <div class="me-4 mb-2">
+                                              <i class="fas fa-tachometer-alt me-2"></i> Pression: 
+                                              <span id="weather-pressure" class="fw-bold">1014.5 hPa</span>
+                                            </div>
+                                            <div class="me-4 mb-2">
+                                              <i class="fas fa-arrow-up me-2"></i> Max: 
+                                              <span id="weather-temp-max" class="fw-bold">28.8°C</span>
+                                            </div>
+                                            <div class="mb-2">
+                                              <i class="fas fa-arrow-down me-2"></i> Min: 
+                                              <span id="weather-temp-min" class="fw-bold">16.6°C</span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                      
+                                      <div class="card-footer text-muted">
+                                        <small>Dernière mise à jour: <span id="weather-last-update">16:04:16</span></small>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  
+                                  <script>
+                                  // Script pour gérer le repli/dépli du widget météo
+                                  document.addEventListener('DOMContentLoaded', function() {
+                                    const toggleBtn = document.getElementById('weather-toggle-btn');
+                                    const weatherContent = document.getElementById('weather-content');
+                                    const weatherTemp = document.getElementById('weather-temp');
+                                    const weatherTempCollapsed = document.getElementById('weather-temp-collapsed');
+                                    let isCollapsed = true; // Commence en mode réduit
+                                    
+                                    if (toggleBtn && weatherContent) {
+                                      toggleBtn.addEventListener('click', function() {
+                                        if (isCollapsed) {
+                                          // Dépli
+                                          weatherContent.style.display = 'block';
+                                          toggleBtn.innerHTML = '<i class="fas fa-minus"></i>';
+                                          weatherTempCollapsed.style.display = 'none';
+                                          isCollapsed = false;
+                                        } else {
+                                          // Repli
+                                          weatherContent.style.display = 'none';
+                                          toggleBtn.innerHTML = '<i class="fas fa-plus"></i>';
+                                          weatherTempCollapsed.style.display = 'inline';
+                                          isCollapsed = true;
+                                        }
+                                      });
+                                    }
+                                    
+                                    // S'assurer que lorsque la température principale est mise à jour,
+                                    // la version réduite est également mise à jour
+                                    // Cette fonction sera appelée par votre code existant qui met à jour weather-temp
+                                    function updateWeatherTemp(temp) {
+                                      if (weatherTemp) weatherTemp.textContent = temp;
+                                      if (weatherTempCollapsed) weatherTempCollapsed.textContent = temp;
+                                    }
+                                    
+                                    // Exposer la fonction pour qu'elle puisse être appelée par d'autres scripts
+                                    window.updateWeatherTemp = updateWeatherTemp;
+                                    
+                                    // Simulation pour tester la mise à jour
+                                    // À supprimer dans l'implémentation réelle
+                                    /*
+                                    setInterval(function() {
+                                      const randomTemp = (25 + Math.random() * 5).toFixed(1) + '°C';
+                                      updateWeatherTemp(randomTemp);
+                                    }, 5000);
+                                    */
+                                  });
+                                  </script>
                     
                 </div>
             </div>
@@ -200,57 +259,201 @@
             </div>
         </div>
 
-        <div class="row">
-            <!-- Carte VPN -->
-            <div class="col-lg-6">
-                <div class="card">
-                    <div class="card-header">
-                        <i class="fas fa-shield-alt me-2"></i> Clients VPN
-                        <span id="vpn-counter" class="badge bg-secondary ms-2">0</span>
-                        <button class="btn btn-sm btn-outline-light float-end" id="refresh-vpn">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <div id="vpn-clients">
-                            Chargement des données VPN...
-                        </div>
-                    </div>
-                </div>
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <div>
+                <i class="fas fa-shield-alt me-2"></i> Clients VPN
+                <span id="vpn-counter" class="badge bg-success ms-2">1</span>
+              </div>
+              <div>
+                <button id="refresh-vpn" class="btn btn-sm btn-outline-light me-2" title="Rafraîchir">
+                  <i class="fas fa-sync-alt"></i>
+                </button>
+                <button id="vpn-toggle-btn" class="btn btn-sm btn-outline-light" title="Réduire/Agrandir">
+                  <i class="fas fa-minus"></i>
+                </button>
+              </div>
             </div>
+            
+            <div id="vpn-content">
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="table table-hover">
+
+                    <tbody id="vpn-clients">
+                      <!-- Exemple de données -->
+                      <tr>
+                        <td><strong>pixel7</strong></td>
+                        <td><span class="badge bg-success">Connecté</span></td>
+                        <td>116 MiB</td>
+                        <td>1.1 GiB</td>
+                        <td>May 01 2025 - 17:00:44</td>
+                      </tr>
+                      <!-- Fin exemple de données -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <script>
+          // Script pour gérer le repli/dépli du widget VPN
+          document.addEventListener('DOMContentLoaded', function() {
+            const toggleBtn = document.getElementById('vpn-toggle-btn');
+            const vpnContent = document.getElementById('vpn-content');
+            let isCollapsed = false;
+            
+            if (toggleBtn && vpnContent) {
+              toggleBtn.addEventListener('click', function() {
+                if (isCollapsed) {
+                  // Dépli
+                  vpnContent.style.display = 'block';
+                  toggleBtn.innerHTML = '<i class="fas fa-minus"></i>';
+                  isCollapsed = false;
+                } else {
+                  // Repli
+                  vpnContent.style.display = 'none';
+                  toggleBtn.innerHTML = '<i class="fas fa-plus"></i>';
+                  isCollapsed = true;
+                }
+              });
+            }
+            
+            // Fonction pour mettre à jour le compteur VPN
+            window.updateVpnCounter = function(count) {
+              const counter = document.getElementById('vpn-counter');
+              if (counter) {
+                counter.textContent = count;
+                counter.className = count > 0 ? 'badge bg-success ms-2' : 'badge bg-secondary ms-2';
+              }
+            };
+          });
+          </script>
 
             <!-- Conteneurs Docker -->
-            <div class="col-lg-6">
-                <div class="card">
-                    <div class="card-header">
-                        <i class="fab fa-docker me-2"></i> Conteneurs Docker
-                        <button class="btn btn-sm btn-outline-light float-end" id="refresh-docker">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Nom</th>
-                                        <th>Image</th>
-                                        <th>Statut</th>
-                                        <th>CPU</th>
-                                        <th>Mémoire</th>
-                                        <th>Réseau</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="docker-containers">
-                                    <tr>
-                                        <td colspan="7" class="text-center">Chargement des conteneurs Docker...</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                  <div>
+                    <i class="fab fa-docker me-2"></i> Conteneurs Docker
+                    <span id="docker-counter-running" class="badge bg-success ms-2">3</span>
+                    <span id="docker-counter-total" class="badge bg-secondary ms-1">6</span>
+                  </div>
+                  <div>
+                    <button id="refresh-docker" class="btn btn-sm btn-outline-light me-2" title="Rafraîchir">
+                      <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <button id="docker-toggle-btn" class="btn btn-sm btn-outline-light" title="Réduire/Agrandir">
+                      <i class="fas fa-minus"></i>
+                    </button>
+                  </div>
                 </div>
+                
+                <div id="docker-content">
+                  <div class="card-body">
+                    <div class="table-responsive">
+                      <table class="table table-hover">
+                        <thead>
+                          <tr>
+                            <th>Nom</th>
+                            <th>Image</th>
+                            <th>Statut</th>
+                            <th>CPU</th>
+                            <th>Mémoire</th>
+
+                          </tr>
+                        </thead>
+                        <tbody id="docker-containers">
+                          <!-- Données réelles de l'image -->
+                          <tr>
+                            <td>wordpress-docker-wordpress-1</td>
+                            <td>arm64v8/wordpress:latest</td>
+                            <td><span class="badge bg-success">Up 23 hours</span></td>
+                            <td>0.01%</td>
+                            <td>0.00% (0B / 0B)</td>
+                            <td>-</td>
+                            <td>
+                              <button class="btn btn-sm btn-outline-info">
+                                <i class="fas fa-chart-bar"></i>
+                              </button>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td>wordpress-docker-db-1</td>
+                            <td>linuxserver/mariadb</td>
+                            <td><span class="badge bg-success">Up 26 hours</span></td>
+                            <td>0.04%</td>
+                            <td>0.00% (0B / 0B)</td>
+                            <td>-</td>
+                            <td>
+                              <button class="btn btn-sm btn-outline-info">
+                                <i class="fas fa-chart-bar"></i>
+                              </button>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td>watchtower</td>
+                            <td>containrrr/watchtower</td>
+                            <td><span class="badge bg-success">Up 2 days (healthy)</span></td>
+                            <td>0.00%</td>
+                            <td>0.00% (0B / 0B)</td>
+                            <td>-</td>
+                            <td>
+                              <button class="btn btn-sm btn-outline-info">
+                                <i class="fas fa-chart-bar"></i>
+                              </button>
+                            </td>
+                          </tr>
+                          <!-- Autres conteneurs... -->
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <script>
+              // Script pour gérer le repli/dépli du widget Docker
+              document.addEventListener('DOMContentLoaded', function() {
+                const toggleBtn = document.getElementById('docker-toggle-btn');
+                const dockerContent = document.getElementById('docker-content');
+                let isCollapsed = false;
+                
+                if (toggleBtn && dockerContent) {
+                  toggleBtn.addEventListener('click', function() {
+                    if (isCollapsed) {
+                      // Dépli
+                      dockerContent.style.display = 'block';
+                      toggleBtn.innerHTML = '<i class="fas fa-minus"></i>';
+                      isCollapsed = false;
+                    } else {
+                      // Repli
+                      dockerContent.style.display = 'none';
+                      toggleBtn.innerHTML = '<i class="fas fa-plus"></i>';
+                      isCollapsed = true;
+                    }
+                  });
+                }
+                
+                // Fonction pour mettre à jour les compteurs Docker
+                window.updateDockerCounters = function(running, total) {
+                  const runningCounter = document.getElementById('docker-counter-running');
+                  const totalCounter = document.getElementById('docker-counter-total');
+                  
+                  if (runningCounter) {
+                    runningCounter.textContent = running;
+                    runningCounter.className = running > 0 ? 'badge bg-success ms-2' : 'badge bg-secondary ms-2';
+                  }
+                  
+                  if (totalCounter) {
+                    totalCounter.textContent = total;
+                  }
+                };
+                
+                // Mettre à jour les compteurs avec les bonnes valeurs (6 conteneurs, dont 3 en cours d'exécution)
+                window.updateDockerCounters(3, 6);
+              });
+              </script>
             </div>
         </div>
 
