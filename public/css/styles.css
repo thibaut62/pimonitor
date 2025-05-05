@@ -70,3 +70,24 @@ body {
 .vpn-client.disconnected {
     border-left-color: #dc3545;
 }
+/* Styles pour le module Google Sheet */
+#sheet-container {
+    transition: height 0.3s ease;
+  }
+  
+  #sheet-config {
+    border-bottom: 1px solid #dee2e6;
+    margin-bottom: 1rem;
+  }
+  
+  #sheet-iframe {
+    background-color: #f8f9fa;
+  }
+  
+  #configure-sheet:hover {
+    color: #0d6efd;
+  }
+  
+  #refresh-sheet .fa-spin {
+    animation-duration: 1s;
+  }
