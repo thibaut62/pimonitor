@@ -144,6 +144,14 @@ app.get('/api/dateinfo', (req, res) => {
   }
 });
 
+// Route pour servir les pages HTML
+app.get('/pages/:page', (req, res) => {
+  const page = req.params.page;
+  const filePath = path.join(__dirname, 'public', 'pages', page);
+  
+  res.sendFile(filePath);
+});
+
 // Route pour récupérer les données météo
 app.get('/api/weather', async (req, res) => {
   try {

@@ -7,71 +7,220 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <style>
-        body {
-            padding-top: 20px;
-            background-color: #f5f5f5;
-        }
-        .card {
-            margin-bottom: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .card-header {
-            background-color: #6c757d;
-            color: white;
-            font-weight: bold;
-            border-radius: 10px 10px 0 0;
-        }
-        .metric {
-            text-align: center;
-            padding: 15px;
-        }
-        .metric-value {
-            font-size: 24px;
-            font-weight: bold;
-        }
-        .metric-label {
-            font-size: 14px;
-            color: #6c757d;
-        }
-        .status-badge {
-            font-size: 12px;
-            padding: 5px 10px;
-            border-radius: 20px;
-        }
-        .chart-container {
-            position: relative;
-            height: 250px;
-            width: 100%;
-        }
-        .docker-container {
-            background-color: #f8f9fa;
-            border-radius: 5px;
-            padding: 10px;
-            margin-bottom: 10px;
-            border-left: 5px solid #17a2b8;
-        }
-        .network-card {
-            height: 100%;
-        }
-        .table-responsive {
-            max-height: 300px;
-            overflow-y: auto;
-        }
-    </style>
+    <link href="css/styles.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/themes.css">
 </head>
 <body>
+
+<!-- À ajouter dans la barre de navigation ou dans l'en-tête -->
+<div class="theme-switch-wrapper">
+  <span class="theme-icon"><i class="fas fa-sun"></i></span>
+  <label class="theme-switch">
+    <input type="checkbox" id="theme-toggle">
+    <span class="slider"></span>
+  </label>
+  <span class="theme-icon" style="display:none;"><i class="fas fa-moon"></i></span>
+</div>
+
     <div class="container">
         <header class="mb-4">
             <div class="d-flex justify-content-between align-items-center">
                 <h1><i class="fas fa-microchip text-danger"></i> Tableau de bord Raspberry Pi (192.168.0.2)</h1>
                 <div>
-                    <span id="connection-status" class="badge bg-success">Connecté</span>
+                    <span id="connection-status" class="badge bg-warning">En attente...</span>
                     <span id="update-time" class="text-muted ms-2">Dernière mise à jour: --:--:--</span>
                 </div>
             </div>
         </header>
+                <!-- Bloc pour Google Sheet -->
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+          <i class="fas fa-table me-2"></i> Google Sheet
+        </div>
+        <div class="d-flex">
+          <button id="refresh-sheet" class="btn btn-sm btn-outline-light me-2" title="Rafraîchir">
+            <i class="fas fa-sync-alt"></i>
+          </button>
+          <button id="sheet-toggle-btn" class="btn btn-sm btn-outline-light" title="Réduire/Agrandir">
+            <i class="fas fa-minus"></i>
+          </button>
+        </div>
+      </div>
+      
+      <div id="sheet-content">
+        <div class="card-body p-0">
+          <!-- Configuration du Google Sheet -->
+          <div id="sheet-config" class="p-3 bg-light" style="display: none;">
+            <div class="row">
+              <div class="col-md-8">
+                <div class="input-group">
+                  <span class="input-group-text">URL du Google Sheet</span>
+                  <input type="text" id="sheet-url" class="form-control" 
+                         placeholder="https://docs.google.com/spreadsheets/d/1BUFBflVSR9kIC9vDtbHRbYvij0Xn8XouiAXfBroBZ4s/edit?usp=sharing">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <button id="save-sheet-config" class="btn btn-primary">Enregistrer</button>
+                <button id="cancel-sheet-config" class="btn btn-secondary ms-2">Annuler</button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Affichage du Google Sheet -->
+          <div id="sheet-container" style="height: 600px; width: 100%;">
+            <iframe id="sheet-iframe" src="" style="width: 100%; height: 100%; border: none;"></iframe>
+          </div>
+        </div>
+        
+        <div class="card-footer">
+          <div class="d-flex justify-content-between">
+            <button id="configure-sheet" class="btn btn-sm btn-outline-secondary">
+              <i class="fas fa-cog me-1"></i> Configurer
+            </button>
+            <small class="text-muted">Dernière mise à jour: <span id="sheet-last-update">Jamais</span></small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+                <!-- Bloc pour la date et météo -->
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-body" id="date-info">
+                                Chargement des informations de date...
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+
+                                <div class="card">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                      <div class="d-flex align-items-center">
+                                        <i class="fas fa-cloud me-2"></i> 
+                                        <span>Météo Saint Laurent Blangy</span>
+                                        <span id="weather-temp-collapsed" class="ms-3 fw-bold">28.8°C</span>
+                                      </div>
+                                      <div class="d-flex">
+                                        <button id="refresh-weather" class="btn btn-sm btn-outline-light me-2" title="Rafraîchir les données météo">
+                                          <i class="fas fa-sync-alt"></i>
+                                        </button>
+                                        <button id="weather-toggle-btn" class="btn btn-sm btn-outline-light" title="Réduire/Agrandir">
+                                          <i class="fas fa-plus"></i>
+                                        </button>
+                                      </div>
+                                    </div>
+                                    
+                                    <div id="weather-content" style="display: none;">
+                                      <div class="card-body">
+                                        <div id="weather-error" class="alert alert-danger" style="display: none;"></div>
+                                        
+                                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center">
+                                          <!-- Affichage principal -->
+                                          <div class="d-flex align-items-center mb-3 mb-md-0">
+                                            <div class="me-3">
+                                              <i id="weather-icon" class="fas fa-cloud display-5"></i>
+                                            </div>
+                                            <div>
+                                              <div id="weather-temp" class="display-4 fw-bold">28.8°C</div>
+                                              <div id="weather-desc" class="text-muted">partiellement nuageux</div>
+                                            </div>
+                                          </div>
+                                          
+                                          <!-- Affichage détails -->
+                                          <div class="d-flex flex-wrap justify-content-between">
+                                            <div class="me-4 mb-2">
+                                              <i class="fas fa-thermometer-half me-2"></i> Ressenti: 
+                                              <span id="weather-feels" class="fw-bold">28.9°C</span>
+                                            </div>
+                                            <div class="me-4 mb-2">
+                                              <i class="fas fa-tint me-2"></i> Humidité: 
+                                              <span id="weather-humidity" class="fw-bold">36%</span>
+                                            </div>
+                                            <div class="me-4 mb-2">
+                                              <i class="fas fa-wind me-2"></i> Vent: 
+                                              <span id="weather-wind" class="fw-bold">9.7 m/s</span>
+                                            </div>
+                                            <div class="me-4 mb-2">
+                                              <i class="fas fa-tachometer-alt me-2"></i> Pression: 
+                                              <span id="weather-pressure" class="fw-bold">1014.5 hPa</span>
+                                            </div>
+                                            <div class="me-4 mb-2">
+                                              <i class="fas fa-arrow-up me-2"></i> Max: 
+                                              <span id="weather-temp-max" class="fw-bold">28.8°C</span>
+                                            </div>
+                                            <div class="mb-2">
+                                              <i class="fas fa-arrow-down me-2"></i> Min: 
+                                              <span id="weather-temp-min" class="fw-bold">16.6°C</span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                      
+                                      <div class="card-footer text-muted">
+                                        <small>Dernière mise à jour: <span id="weather-last-update">16:04:16</span></small>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  
+                                  <script>
+                                  // Script pour gérer le repli/dépli du widget météo
+                                  document.addEventListener('DOMContentLoaded', function() {
+                                    const toggleBtn = document.getElementById('weather-toggle-btn');
+                                    const weatherContent = document.getElementById('weather-content');
+                                    const weatherTemp = document.getElementById('weather-temp');
+                                    const weatherTempCollapsed = document.getElementById('weather-temp-collapsed');
+                                    let isCollapsed = true; // Commence en mode réduit
+                                    
+                                    if (toggleBtn && weatherContent) {
+                                      toggleBtn.addEventListener('click', function() {
+                                        if (isCollapsed) {
+                                          // Dépli
+                                          weatherContent.style.display = 'block';
+                                          toggleBtn.innerHTML = '<i class="fas fa-minus"></i>';
+                                          weatherTempCollapsed.style.display = 'none';
+                                          isCollapsed = false;
+                                        } else {
+                                          // Repli
+                                          weatherContent.style.display = 'none';
+                                          toggleBtn.innerHTML = '<i class="fas fa-plus"></i>';
+                                          weatherTempCollapsed.style.display = 'inline';
+                                          isCollapsed = true;
+                                        }
+                                      });
+                                    }
+                                    
+                                    // S'assurer que lorsque la température principale est mise à jour,
+                                    // la version réduite est également mise à jour
+                                    // Cette fonction sera appelée par votre code existant qui met à jour weather-temp
+                                    function updateWeatherTemp(temp) {
+                                      if (weatherTemp) weatherTemp.textContent = temp;
+                                      if (weatherTempCollapsed) weatherTempCollapsed.textContent = temp;
+                                    }
+                                    
+                                    // Exposer la fonction pour qu'elle puisse être appelée par d'autres scripts
+                                    window.updateWeatherTemp = updateWeatherTemp;
+                                    
+                                    // Simulation pour tester la mise à jour
+                                    // À supprimer dans l'implémentation réelle
+                                    /*
+                                    setInterval(function() {
+                                      const randomTemp = (25 + Math.random() * 5).toFixed(1) + '°C';
+                                      updateWeatherTemp(randomTemp);
+                                    }, 5000);
+                                    */
+                                  });
+                                  </script>
+                    
+                </div>
+            </div>
+        </div>
 
         <div class="row">
             <!-- Carte CPU -->
@@ -142,7 +291,7 @@
                         <i class="fas fa-chart-line me-2"></i> Utilisation CPU en temps réel
                     </div>
                     <div class="card-body">
-                        <div class="chart-container">
+                        <div style="height: 250px; width: 100%;">
                             <canvas id="cpuChart"></canvas>
                         </div>
                     </div>
@@ -151,12 +300,12 @@
 
             <!-- Graphique réseau en temps réel -->
             <div class="col-md-6">
-                <div class="card network-card">
+                <div class="card">
                     <div class="card-header">
                         <i class="fas fa-network-wired me-2"></i> Trafic réseau en temps réel
                     </div>
                     <div class="card-body">
-                        <div class="chart-container">
+                        <div style="height: 250px; width: 100%;">
                             <canvas id="networkChart"></canvas>
                         </div>
                     </div>
@@ -164,43 +313,207 @@
             </div>
         </div>
 
-        <div class="row">
-            <!-- Conteneurs Docker -->
-            <div class="col-lg-8">
-                <div class="card">
-                    <div class="card-header">
-                        <i class="fab fa-docker me-2"></i> Conteneurs Docker
-                        <button class="btn btn-sm btn-outline-light float-end" id="refresh-docker">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Nom</th>
-                                        <th>Image</th>
-                                        <th>Statut</th>
-                                        <th>CPU</th>
-                                        <th>Mémoire</th>
-                                        <th>Réseau</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="docker-containers">
-                                    <tr>
-                                        <td colspan="6" class="text-center">Chargement des conteneurs Docker...</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <div>
+                <i class="fas fa-shield-alt me-2"></i> Clients VPN
+                <span id="vpn-counter" class="badge bg-success ms-2">1</span>
+              </div>
+              <div>
+                <button id="refresh-vpn" class="btn btn-sm btn-outline-light me-2" title="Rafraîchir">
+                  <i class="fas fa-sync-alt"></i>
+                </button>
+                <button id="vpn-toggle-btn" class="btn btn-sm btn-outline-light" title="Réduire/Agrandir">
+                  <i class="fas fa-minus"></i>
+                </button>
+              </div>
             </div>
+            
+            <div id="vpn-content">
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="table table-hover">
 
+                    <tbody id="vpn-clients">
+                      <!-- Exemple de données -->
+                      <tr>
+                        <td><strong>pixel7</strong></td>
+                        <td><span class="badge bg-success">Connecté</span></td>
+                        <td>116 MiB</td>
+                        <td>1.1 GiB</td>
+                        <td>May 01 2025 - 17:00:44</td>
+                      </tr>
+                      <!-- Fin exemple de données -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <script>
+          // Script pour gérer le repli/dépli du widget VPN
+          document.addEventListener('DOMContentLoaded', function() {
+            const toggleBtn = document.getElementById('vpn-toggle-btn');
+            const vpnContent = document.getElementById('vpn-content');
+            let isCollapsed = false;
+            
+            if (toggleBtn && vpnContent) {
+              toggleBtn.addEventListener('click', function() {
+                if (isCollapsed) {
+                  // Dépli
+                  vpnContent.style.display = 'block';
+                  toggleBtn.innerHTML = '<i class="fas fa-minus"></i>';
+                  isCollapsed = false;
+                } else {
+                  // Repli
+                  vpnContent.style.display = 'none';
+                  toggleBtn.innerHTML = '<i class="fas fa-plus"></i>';
+                  isCollapsed = true;
+                }
+              });
+            }
+            
+            // Fonction pour mettre à jour le compteur VPN
+            window.updateVpnCounter = function(count) {
+              const counter = document.getElementById('vpn-counter');
+              if (counter) {
+                counter.textContent = count;
+                counter.className = count > 0 ? 'badge bg-success ms-2' : 'badge bg-secondary ms-2';
+              }
+            };
+          });
+          </script>
+
+            <!-- Conteneurs Docker -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                  <div>
+                    <i class="fab fa-docker me-2"></i> Conteneurs Docker
+                    <span id="docker-counter-running" class="badge bg-success ms-2">3</span>
+                    <span id="docker-counter-total" class="badge bg-secondary ms-1">6</span>
+                  </div>
+                  <div>
+                    <button id="refresh-docker" class="btn btn-sm btn-outline-light me-2" title="Rafraîchir">
+                      <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <button id="docker-toggle-btn" class="btn btn-sm btn-outline-light" title="Réduire/Agrandir">
+                      <i class="fas fa-minus"></i>
+                    </button>
+                  </div>
+                </div>
+                
+                <div id="docker-content">
+                  <div class="card-body">
+                    <div class="table-responsive">
+                      <table class="table table-hover">
+                        <thead>
+                          <tr>
+                            <th>Nom</th>
+                            <th>Image</th>
+                            <th>Statut</th>
+                            <th>CPU</th>
+                            <th>Mémoire</th>
+
+                          </tr>
+                        </thead>
+                        <tbody id="docker-containers">
+                          <!-- Données réelles de l'image -->
+                          <tr>
+                            <td>wordpress-docker-wordpress-1</td>
+                            <td>arm64v8/wordpress:latest</td>
+                            <td><span class="badge bg-success">Up 23 hours</span></td>
+                            <td>0.01%</td>
+                            <td>0.00% (0B / 0B)</td>
+                            <td>-</td>
+                            <td>
+                              <button class="btn btn-sm btn-outline-info">
+                                <i class="fas fa-chart-bar"></i>
+                              </button>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td>wordpress-docker-db-1</td>
+                            <td>linuxserver/mariadb</td>
+                            <td><span class="badge bg-success">Up 26 hours</span></td>
+                            <td>0.04%</td>
+                            <td>0.00% (0B / 0B)</td>
+                            <td>-</td>
+                            <td>
+                              <button class="btn btn-sm btn-outline-info">
+                                <i class="fas fa-chart-bar"></i>
+                              </button>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td>watchtower</td>
+                            <td>containrrr/watchtower</td>
+                            <td><span class="badge bg-success">Up 2 days (healthy)</span></td>
+                            <td>0.00%</td>
+                            <td>0.00% (0B / 0B)</td>
+                            <td>-</td>
+                            <td>
+                              <button class="btn btn-sm btn-outline-info">
+                                <i class="fas fa-chart-bar"></i>
+                              </button>
+                            </td>
+                          </tr>
+                          <!-- Autres conteneurs... -->
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <script>
+              // Script pour gérer le repli/dépli du widget Docker
+              document.addEventListener('DOMContentLoaded', function() {
+                const toggleBtn = document.getElementById('docker-toggle-btn');
+                const dockerContent = document.getElementById('docker-content');
+                let isCollapsed = false;
+                
+                if (toggleBtn && dockerContent) {
+                  toggleBtn.addEventListener('click', function() {
+                    if (isCollapsed) {
+                      // Dépli
+                      dockerContent.style.display = 'block';
+                      toggleBtn.innerHTML = '<i class="fas fa-minus"></i>';
+                      isCollapsed = false;
+                    } else {
+                      // Repli
+                      dockerContent.style.display = 'none';
+                      toggleBtn.innerHTML = '<i class="fas fa-plus"></i>';
+                      isCollapsed = true;
+                    }
+                  });
+                }
+                
+                // Fonction pour mettre à jour les compteurs Docker
+                window.updateDockerCounters = function(running, total) {
+                  const runningCounter = document.getElementById('docker-counter-running');
+                  const totalCounter = document.getElementById('docker-counter-total');
+                  
+                  if (runningCounter) {
+                    runningCounter.textContent = running;
+                    runningCounter.className = running > 0 ? 'badge bg-success ms-2' : 'badge bg-secondary ms-2';
+                  }
+                  
+                  if (totalCounter) {
+                    totalCounter.textContent = total;
+                  }
+                };
+                
+                // Mettre à jour les compteurs avec les bonnes valeurs (6 conteneurs, dont 3 en cours d'exécution)
+                window.updateDockerCounters(3, 6);
+              });
+              </script>
+            </div>
+        </div>
+
+        <div class="row mt-4">
             <!-- EarnApp Status -->
-            <div class="col-lg-4">
+            <div class="col-lg-12">
                 <div class="card">
                     <div class="card-header">
                         <i class="fas fa-money-bill-wave me-2"></i> EarnApp
@@ -209,649 +522,41 @@
                         </button>
                     </div>
                     <div class="card-body">
-                        <div id="earnapp-status">
-                            Vérification du statut EarnApp...
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div id="earnapp-status">
+                                    Vérification du statut EarnApp...
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div id="earnapp-network">
+                                    <!-- Les statistiques réseau seront insérées ici -->
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
-            <div class="card-body">
-                <div id="earnapp-status">
-                    Vérification du statut EarnApp...
-                </div>
-                <div id="earnapp-network" class="mt-3">
-                    <!-- Les statistiques réseau seront insérées ici -->
                 </div>
             </div>
         </div>
+
+        <footer class="mt-4 mb-4 text-center text-muted">
+            <small>Tableau de bord Raspberry Pi &copy; 2025 | v1.1</small>
+        </footer>
     </div>
 
-    <script>
-        // Configuration
-        const API_BASE_URL = 'http://192.168.0.2:3000/api';
-        const WS_URL = 'ws://192.168.0.2:3000';
-        const containerNetworkStats = {};
-        const earnappNetworkStats = { timestamp: 0, rx_bytes: 0, tx_bytes: 0 };
-
-        
-
-        
-        // Initialisation des graphiques
-        const cpuChartCtx = document.getElementById('cpuChart').getContext('2d');
-        const cpuChart = new Chart(cpuChartCtx, {
-            type: 'line',
-            data: {
-                labels: Array(30).fill(''),
-                datasets: [{
-                    label: 'Utilisation CPU (%)',
-                    data: Array(30).fill(0),
-                    borderColor: '#007bff',
-                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100,
-                        title: {
-                            display: true,
-                            text: 'Utilisation (%)'
-                        }
-                    },
-                    x: {
-                        display: false
-                    }
-                },
-                animation: {
-                    duration: 0
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                }
-            }
-        });
-
-        // Initialisation du graphique d'historique de bande passante
-const bandwidthChartCtx = document.getElementById('bandwidthHistoryChart').getContext('2d');
-const bandwidthChart = new Chart(bandwidthChartCtx, {
-    type: 'line',
-    data: {
-        labels: Array(60).fill(''),
-        datasets: [
-            {
-                label: 'Téléchargement (KiB/s)',
-                data: Array(60).fill(0),
-                borderColor: '#28a745',
-                backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.4
-            },
-            {
-                label: 'Envoi (KiB/s)',
-                data: Array(60).fill(0),
-                borderColor: '#dc3545',
-                backgroundColor: 'rgba(220, 53, 69, 0.1)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.4
-            }
-        ]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-            y: {
-                beginAtZero: true,
-                title: {
-                    display: true,
-                    text: 'KiB/s'
-                }
-            },
-            x: {
-                display: true,
-                grid: {
-                    display: false
-                },
-                ticks: {
-                    callback: function(value, index) {
-                        // Afficher seulement quelques valeurs pour ne pas encombrer l'axe
-                        return index % 10 === 0 ? index + 's' : '';
-                    }
-                }
-            }
-        },
-        plugins: {
-            legend: {
-                position: 'top'
-            },
-            tooltip: {
-                mode: 'index',
-                intersect: false
-            }
-        },
-        animation: {
-            duration: 0
-        }
-    }
-});
-
-// Gestion des changements de sélection pour le graphique de bande passante
-document.getElementById('bandwidth-selector').addEventListener('change', function() {
-    const selectedValue = this.value;
-    
-    // Modifier le graphique en fonction de la sélection
-    if (selectedValue === 'all') {
-        // Afficher les données globales du système
-        bandwidthChart.data.datasets[0].label = 'Téléchargement Total (KiB/s)';
-        bandwidthChart.data.datasets[1].label = 'Envoi Total (KiB/s)';
-        // Réinitialiser les données du graphique
-        bandwidthChart.data.datasets[0].data = Array(60).fill(0);
-        bandwidthChart.data.datasets[1].data = Array(60).fill(0);
-    } else if (selectedValue === 'earnapp') {
-        // Afficher les données EarnApp
-        bandwidthChart.data.datasets[0].label = 'EarnApp Téléchargement (KiB/s)';
-        bandwidthChart.data.datasets[1].label = 'EarnApp Envoi (KiB/s)';
-        // Réinitialiser les données du graphique
-        bandwidthChart.data.datasets[0].data = Array(60).fill(0);
-        bandwidthChart.data.datasets[1].data = Array(60).fill(0);
-    } else {
-        // Afficher les données d'un conteneur Docker spécifique
-        const containerId = selectedValue;
-        bandwidthChart.data.datasets[0].label = `Container ${containerId.substring(0, 8)} Téléchargement (KiB/s)`;
-        bandwidthChart.data.datasets[1].label = `Container ${containerId.substring(0, 8)} Envoi (KiB/s)`;
-        // Réinitialiser les données du graphique
-        bandwidthChart.data.datasets[0].data = Array(60).fill(0);
-        bandwidthChart.data.datasets[1].data = Array(60).fill(0);
-    }
-    
-    bandwidthChart.update();
-});
-        
-        function formatBytes(bytes, decimals = 2) {
-            if (bytes === 0) return '0 Bytes';
-            
-            const k = 1024;
-            const dm = decimals < 0 ? 0 : decimals;
-            const sizes = ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB'];
-            
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-        }
-        
-        // 3. Ajoutez cette fonction pour formater les taux en unités lisibles
-        function formatBytesPerSecond(bytesPerSecond, decimals = 2) {
-            return formatBytes(bytesPerSecond, decimals) + '/s';
-        }
-        
-        // 4. Ajoutez cette fonction pour calculer les taux entre deux mesures
-        function calculateRate(currentBytes, previousBytes, timeDiffMs) {
-            if (!previousBytes || !timeDiffMs || timeDiffMs === 0) {
-                return 0;
-            }
-            
-            const byteDiff = currentBytes - previousBytes;
-            // Convertir de ms à secondes
-            const timeDiffSec = timeDiffMs / 1000;
-            
-            return byteDiff / timeDiffSec;
-        }
-
-        // Fonctions utilitaires
-        function updateTime() {
-            const now = new Date();
-            document.getElementById('update-time').textContent = 
-                `Dernière mise à jour: ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-        }
-
-        function updateChart(chart, newValue, datasetIndex = 0) {
-            chart.data.datasets[datasetIndex].data.push(newValue);
-            chart.data.datasets[datasetIndex].data.shift();
-            chart.update();
-        }
-
-        // Gestion des erreurs et journalisation
-        function logError(message, error) {
-            console.error(message, error);
-            document.getElementById('connection-status').className = 'badge bg-danger';
-            document.getElementById('connection-status').textContent = 'Erreur';
-        }
-
-        function logDebug(message, data) {
-            console.log(message, data);
-        }
-
-        // Chargement initial des données
-        async function loadSystemInfo() {
-            try {
-                const response = await fetch(`${API_BASE_URL}/system`);
-                if (!response.ok) {
-                    throw new Error(`Erreur HTTP: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                logDebug('Données système reçues:', data);
-                
-                // Mise à jour CPU
-                if (data.cpu) {
-                    document.getElementById('cpu-load').textContent = `${data.cpu.load}%`;
-                    document.getElementById('cpu-progress').style.width = `${data.cpu.load}%`;
-                    document.getElementById('cpu-progress').setAttribute('aria-valuenow', data.cpu.load);
-                    
-                    if (data.cpu.model) {
-                        document.getElementById('cpu-model').textContent = `Modèle: ${data.cpu.model}`;
-                    }
-                    
-                    if (data.cpu.cores) {
-                        document.getElementById('cpu-cores').textContent = `Cœurs: ${data.cpu.cores}`;
-                    }
-                }
-                
-                // Mise à jour température
-                if (data.temperature && data.temperature.main) {
-                    document.getElementById('cpu-temp').textContent = `Température: ${data.temperature.main}°C`;
-                }
-                
-                // Mise à jour mémoire
-                if (data.memory) {
-                    document.getElementById('memory-used').textContent = `${data.memory.used} / ${data.memory.total}`;
-                    document.getElementById('memory-free').textContent = `Libre: ${data.memory.free}`;
-                    document.getElementById('memory-percentage').textContent = `Utilisée: ${data.memory.usedPercentage}%`;
-                    document.getElementById('memory-progress').style.width = `${data.memory.usedPercentage}%`;
-                    document.getElementById('memory-progress').setAttribute('aria-valuenow', data.memory.usedPercentage);
-                }
-                
-                // Mise à jour disque
-                if (data.disk && Array.isArray(data.disk)) {
-                    const diskContainer = document.getElementById('disk-info');
-                    diskContainer.innerHTML = '';
-                    
-                    data.disk.forEach(disk => {
-                        const diskElement = document.createElement('div');
-                        diskElement.className = 'mb-3';
-                        diskElement.innerHTML = `
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <span>${disk.fs}</span>
-                                <span>${disk.used} / ${disk.size}</span>
-                            </div>
-                            <div class="progress">
-                                <div class="progress-bar bg-info" role="progressbar" 
-                                    style="width: ${disk.usedPercentage}%" 
-                                    aria-valuenow="${disk.usedPercentage}" 
-                                    aria-valuemin="0" 
-                                    aria-valuemax="100">
-                                    ${disk.usedPercentage}%
-                                </div>
-                            </div>
-                        `;
-                        diskContainer.appendChild(diskElement);
-                    });
-                }
-                
-                document.getElementById('connection-status').className = 'badge bg-success';
-                document.getElementById('connection-status').textContent = 'Connecté';
-                updateTime();
-            } catch (error) {
-                logError('Erreur de chargement des informations système:', error);
-            }
-        }
-
-        async function loadDockerContainers() {
-            try {
-                const response = await fetch(`${API_BASE_URL}/docker`);
-                if (!response.ok) {
-                    throw new Error(`Erreur HTTP: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                logDebug('Données Docker reçues:', data);
-                
-                const containersList = document.getElementById('docker-containers');
-                containersList.innerHTML = '';
-                
-                if (data.containers && data.containers.length > 0) {
-                    data.containers.forEach(container => {
-                        const statusClass = container.status.includes('Up') ? 'success' : 'warning';
-                        
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td>${container.name}</td>
-                            <td><small>${container.image}</small></td>
-                            <td><span class="badge bg-${statusClass}">${container.status}</span></td>
-                            <td id="cpu-${container.id}">-</td>
-                            <td id="mem-${container.id}">-</td>
-                            <td id="net-${container.id}">-</td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-info docker-stats" data-id="${container.id}">
-                                    <i class="fas fa-chart-bar"></i>
-                                </button>
-                            </td>
-                        `;
-                        containersList.appendChild(row);
-                        
-                        // Chargement des stats pour ce conteneur
-                        loadContainerStats(container.id);
-                    });
-                    
-                    // Ajouter les événements aux boutons
-                    document.querySelectorAll('.docker-stats').forEach(button => {
-                        button.addEventListener('click', function() {
-                            const containerId = this.getAttribute('data-id');
-                            loadContainerStats(containerId);
-                        });
-                    });
-                } else {
-                    containersList.innerHTML = '<tr><td colspan="7" class="text-center">Aucun conteneur Docker en cours d exécution</td></tr>';
-                }
-            } catch (error) {
-                logError('Erreur de chargement des conteneurs Docker:', error);
-                document.getElementById('docker-containers').innerHTML = 
-                    '<tr><td colspan="7" class="text-center text-danger">Erreur de chargement des conteneurs</td></tr>';
-            }
-        }
-
-        async function loadContainerStats(containerId) {
-            try {
-                // Charger les stats CPU/mémoire
-                const response = await fetch(`${API_BASE_URL}/docker/${containerId}/stats`);
-                if (!response.ok) {
-                    throw new Error(`Erreur HTTP: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                logDebug(`Stats pour conteneur ${containerId}:`, data);
-                
-                const cpuElement = document.getElementById(`cpu-${containerId}`);
-                if (cpuElement) {
-                    cpuElement.textContent = data.cpuPerc || '-';
-                }
-                
-                const memElement = document.getElementById(`mem-${containerId}`);
-                if (memElement) {
-                    memElement.textContent = data.memPerc ? `${data.memPerc} (${data.memUsage})` : '-';
-                }
-                
-                // Charger les stats réseau
-                try {
-                    const netResponse = await fetch(`${API_BASE_URL}/docker/${containerId}/network`);
-                    if (netResponse.ok) {
-                        const netData = await netResponse.json();
-                        logDebug(`Stats réseau pour conteneur ${containerId}:`, netData);
-                        
-                        const prevStats = containerNetworkStats[containerId];
-                        const currentTime = Date.now();
-                        
-                        // Calculer les taux s'il y a des données précédentes
-                        let rxRate = 0;
-                        let txRate = 0;
-                        
-                        if (prevStats && prevStats.timestamp) {
-                            const timeDiff = currentTime - prevStats.timestamp;
-                            rxRate = calculateRate(netData.rx_bytes, prevStats.rx_bytes, timeDiff);
-                            txRate = calculateRate(netData.tx_bytes, prevStats.tx_bytes, timeDiff);
-                        }
-                        
-                        // Mettre à jour les statistiques stockées
-                        containerNetworkStats[containerId] = {
-                            rx_bytes: netData.rx_bytes,
-                            tx_bytes: netData.tx_bytes,
-                            timestamp: currentTime
-                        };
-                        
-                        // Mettre à jour l'interface utilisateur
-                        const netElement = document.getElementById(`net-${containerId}`);
-                        if (netElement) {
-                            netElement.innerHTML = `
-                                <div>
-                                    <span class="badge bg-success">↓ ${formatBytesPerSecond(rxRate)}</span>
-                                    <span class="badge bg-danger">↑ ${formatBytesPerSecond(txRate)}</span>
-                                </div>
-                            `;
-                        }
-                    }
-                } catch (netError) {
-                    console.warn(`Impossible de charger les stats réseau pour ${containerId}:`, netError);
-                }
-            } catch (error) {
-                logError(`Erreur de chargement des stats pour ${containerId}:`, error);
-            }
-        }
-
-        async function loadEarnAppNetworkStats() {
-            try {
-                const response = await fetch(`${API_BASE_URL}/earnapp/network`);
-                if (!response.ok) {
-                    throw new Error(`Erreur HTTP: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                logDebug('Données réseau EarnApp reçues:', data);
-                
-                const statusContainer = document.getElementById('earnapp-network');
-                if (!statusContainer) {
-                    return;
-                }
-                
-                // Si nous avons déjà reçu des données auparavant, calculer le taux
-                let rxRate = 0;
-                let txRate = 0;
-                
-                if (data.type === 'docker_container' || data.type === 'system_process') {
-                    // Ces types de données fournissent déjà des taux
-                    if (data.rx_bytes_per_sec !== undefined) {
-                        rxRate = data.rx_bytes_per_sec;
-                    }
-                    if (data.tx_bytes_per_sec !== undefined) {
-                        txRate = data.tx_bytes_per_sec;
-                    }
-                } else if (data.type === 'estimate') {
-                    // Ces types de données fournissent déjà des estimations de taux
-                    rxRate = data.estimated_rx_bytes_per_sec;
-                    txRate = data.estimated_tx_bytes_per_sec;
-                } else {
-                    // Pour les autres types, calculer le taux à partir des totaux
-                    const prevStats = earnappNetworkStats;
-                    const currentTime = Date.now();
-                    
-                    if (prevStats && prevStats.timestamp && data.rx_bytes !== undefined) {
-                        const timeDiff = currentTime - prevStats.timestamp;
-                        rxRate = calculateRate(data.rx_bytes, prevStats.rx_bytes, timeDiff);
-                        txRate = calculateRate(data.tx_bytes, prevStats.tx_bytes, timeDiff);
-                    }
-                    
-                    // Mettre à jour les statistiques stockées
-                    if (data.rx_bytes !== undefined) {
-                        earnappNetworkStats.rx_bytes = data.rx_bytes;
-                        earnappNetworkStats.tx_bytes = data.tx_bytes;
-                        earnappNetworkStats.timestamp = currentTime;
-                    }
-                }
-                
-                // Mettre à jour l'interface utilisateur
-                statusContainer.innerHTML = `
-                    <div class="card mb-3">
-                        <div class="card-header bg-info text-white">
-                            <i class="fas fa-network-wired me-2"></i> Trafic réseau
-                        </div>
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between mb-2">
-                                <div>
-                                    <i class="fas fa-arrow-down text-success"></i> Téléchargement:
-                                </div>
-                                <div>
-                                    <strong>${formatBytesPerSecond(rxRate)}</strong>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between">
-                                <div>
-                                    <i class="fas fa-arrow-up text-danger"></i> Envoi:
-                                </div>
-                                <div>
-                                    <strong>${formatBytesPerSecond(txRate)}</strong>
-                                </div>
-                            </div>
-                            <div class="text-muted small mt-2">
-                                <em>Type de mesure: ${data.type || 'standard'}</em>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } catch (error) {
-                logError('Erreur de chargement des stats réseau EarnApp:', error);
-                const statusContainer = document.getElementById('earnapp-network');
-                if (statusContainer) {
-                    statusContainer.innerHTML = `
-                        <div class="alert alert-danger">
-                            Impossible de charger les statistiques réseau
-                        </div>
-                    `;
-                }
-            }
-        }
-
-        async function loadEarnAppStatus() {
-            try {
-                const response = await fetch(`${API_BASE_URL}/earnapp`);
-                if (!response.ok) {
-                    throw new Error(`Erreur HTTP: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                logDebug('Données EarnApp reçues:', data);
-                
-                const statusContainer = document.getElementById('earnapp-status');
-                
-                if (data.status === 'running') {
-                    let logHtml = '<div class="alert alert-success">EarnApp est en cours d\'exécution</div>';
-                    
-                    if (data.logs && data.logs.length > 0) {
-                        logHtml += '<div class="mt-3"><strong>Derniers logs:</strong></div>';
-                        logHtml += '<div class="small" style="max-height: 150px; overflow-y: auto;">';
-                        data.logs.forEach(log => {
-                            logHtml += `<div class="text-muted">${log}</div>`;
-                        });
-                        logHtml += '</div>';
-                    }
-                    
-                    statusContainer.innerHTML = logHtml;
-                    
-                    // Charger et afficher les statistiques réseau
-                    loadEarnAppNetworkStats();
-                } else {
-                    statusContainer.innerHTML = '<div class="alert alert-warning">EarnApp n\'est pas en cours d\'exécution</div>';
-                    // Effacer les statistiques réseau
-                    const networkContainer = document.getElementById('earnapp-network');
-                    if (networkContainer) {
-                        networkContainer.innerHTML = '';
-                    }
-                }
-            } catch (error) {
-                logError('Erreur de chargement du statut EarnApp:', error);
-                document.getElementById('earnapp-status').innerHTML = 
-                    '<div class="alert alert-danger">Erreur de chargement du statut EarnApp</div>';
-            }
-        }
-
-        // Initialisation des WebSockets pour les mises à jour en temps réel
-        function initWebSocket() {
-            const ws = new WebSocket(WS_URL);
-            
-            ws.onopen = function() {
-                console.log('WebSocket connecté');
-                document.getElementById('connection-status').className = 'badge bg-success';
-                document.getElementById('connection-status').textContent = 'Connecté';
-            };
-            
-            ws.onmessage = function(event) {
-                try {
-                    const data = JSON.parse(event.data);
-                    logDebug('Données WebSocket reçues:', data);
-                    
-                    // Mise à jour CPU
-                    if (data.cpu && data.cpu.load) {
-                        document.getElementById('cpu-load').textContent = `${data.cpu.load}%`;
-                        document.getElementById('cpu-progress').style.width = `${data.cpu.load}%`;
-                        document.getElementById('cpu-progress').setAttribute('aria-valuenow', data.cpu.load);
-                        
-                        // Mise à jour graphique CPU
-                        updateChart(cpuChart, parseFloat(data.cpu.load));
-                    }
-                    
-                    // Mise à jour température
-                    if (data.temperature && data.temperature.main) {
-                        document.getElementById('cpu-temp').textContent = `Température: ${data.temperature.main}°C`;
-                    }
-                    
-                    // Mise à jour mémoire
-                    if (data.memory) {
-                        if (data.memory.used && data.memory.total) {
-                            document.getElementById('memory-used').textContent = `${data.memory.used} / ${data.memory.total} GB`;
-                        }
-                        
-                        if (data.memory.usedPercentage) {
-                            document.getElementById('memory-percentage').textContent = `Utilisée: ${data.memory.usedPercentage}%`;
-                            document.getElementById('memory-progress').style.width = `${data.memory.usedPercentage}%`;
-                            document.getElementById('memory-progress').setAttribute('aria-valuenow', data.memory.usedPercentage);
-                        }
-                    }
-                    
-                    // Mise à jour graphique réseau
-                    if (data.network && data.network.length > 0) {
-                        // Prendre la première interface réseau
-                        const netInterface = data.network[0];
-                        if (netInterface.rx_sec && netInterface.tx_sec) {
-                            updateChart(networkChart, parseFloat(netInterface.rx_sec), 0);  // Download
-                            updateChart(networkChart, parseFloat(netInterface.tx_sec), 1);  // Upload
-                        }
-                    }
-                    
-                    updateTime();
-                } catch (error) {
-                    logError('Erreur de traitement des données WebSocket:', error);
-                }
-            };
-            
-            ws.onclose = function() {
-                console.log('WebSocket déconnecté');
-                document.getElementById('connection-status').className = 'badge bg-danger';
-                document.getElementById('connection-status').textContent = 'Déconnecté';
-                
-                // Tentative de reconnexion après 5 secondes
-                setTimeout(initWebSocket, 5000);
-            };
-            
-            ws.onerror = function(error) {
-                logError('Erreur WebSocket:', error);
-                document.getElementById('connection-status').className = 'badge bg-danger';
-                document.getElementById('connection-status').textContent = 'Erreur';
-            };
-        }
-
-        // Gestionnaires d'événements pour les boutons de rafraîchissement
-        document.getElementById('refresh-docker').addEventListener('click', loadDockerContainers);
-        document.getElementById('refresh-earnapp').addEventListener('click', loadEarnAppStatus);
-        
-        // Chargement initial des données
-        loadSystemInfo();
-        loadDockerContainers();
-        loadEarnAppStatus();
-        
-        // Initialisation des WebSockets
-        initWebSocket();
-        
-        // Rafraîchissement périodique des données qui ne sont pas en temps réel
-        setInterval(loadDockerContainers, 30000);  // Toutes les 30 secondes
-        setInterval(loadEarnAppStatus, 60000);     // Toutes les 60 secondes
-    </script>
+    <!-- Chargement des scripts modulaires -->
+    <script src="js/googlesheet.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/cpu.js"></script>
+    <script src="js/memory.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/network.js"></script>
+    <script src="js/docker.js"></script>
+    <script src="js/earnapp.js"></script>
+    <script src="js/vpn.js"></script>
+    <script src="js/dateinfo.js"></script>
+    <script src="js/weather.js"></script>
+    <script src="js/theme-switcher.js"></script>
+    <script src="js/chart-theme.js"></script>
 </body>
 </html>
