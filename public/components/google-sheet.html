@@ -1,0 +1,58 @@
+<!-- Composant Google Sheet -->
+<div class="card-header">
+    <i class="fas fa-microchip me-2"></i> Google Sheet
+</div>
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="fas fa-table me-2"></i> Google Sheet
+                </div>
+                <div class="d-flex">
+                    <button id="refresh-sheet" class="btn btn-sm btn-outline-light me-2" title="Rafraîchir">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <button id="sheet-toggle-btn" class="btn btn-sm btn-outline-light" title="Réduire/Agrandir">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="sheet-content">
+                <div class="card-body p-0">
+                    <!-- Configuration du Google Sheet -->
+                    <div id="sheet-config" class="p-3 bg-light" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="input-group">
+                                    <span class="input-group-text">URL du Google Sheet</span>
+                                    <input type="text" id="sheet-url" class="form-control" 
+                                         placeholder="https://docs.google.com/spreadsheets/d/1BUFBflVSR9kIC9vDtbHRbYvij0Xn8XouiAXfBroBZ4s/edit?usp=sharing">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <button id="save-sheet-config" class="btn btn-primary">Enregistrer</button>
+                                <button id="cancel-sheet-config" class="btn btn-secondary ms-2">Annuler</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Affichage du Google Sheet -->
+                    <div id="sheet-container" style="height: 600px; width: 100%;">
+                        <iframe id="sheet-iframe" src="" style="width: 100%; height: 100%; border: none;"></iframe>
+                    </div>
+                </div>
+                
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between">
+                        <button id="configure-sheet" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-cog me-1"></i> Configurer
+                        </button>
+                        <small class="text-muted">Dernière mise à jour: <span id="sheet-last-update">Jamais</span></small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

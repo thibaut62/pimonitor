@@ -1,0 +1,41 @@
+<!-- Composant Clients VPN -->
+<div class="card-header">
+    <i class="fas fa-microchip me-2"></i> VPN Wireguard
+</div>
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+            <i class="fas fa-shield-alt me-2"></i> Clients VPN
+            <span id="vpn-counter" class="badge bg-success ms-2">1</span>
+        </div>
+        <div>
+            <button id="refresh-vpn" class="btn btn-sm btn-outline-light me-2" title="Rafraîchir">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+            <button id="vpn-toggle-btn" class="btn btn-sm btn-outline-light" title="Réduire/Agrandir">
+                <i class="fas fa-minus"></i>
+            </button>
+        </div>
+    </div>
+    
+    <div id="vpn-content">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Nom</th>
+                            <th>Statut</th>
+                            <th>Trafic reçu</th>
+                            <th>Trafic envoyé</th>
+                            <th>Dernière activité</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vpn-clients">
+                        <!-- Les entrées seront ajoutées dynamiquement par JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

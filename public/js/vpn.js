@@ -1,8 +1,21 @@
-// vpn.js - Module pour la gestion des clients VPN (version finale)
+// vpn.js - Module pour la gestion des clients VPN
 
 window.VPNModule = (function() {
+    // Vérifier si les éléments DOM requis sont présents
+    function checkRequiredElements() {
+        return document.getElementById('vpn-clients') && 
+               document.getElementById('vpn-counter');
+    }
+    
     // Chargement des clients VPN
     async function loadVPNClients() {
+        // Vérifier si les éléments requis sont présents
+        if (!checkRequiredElements()) {
+            window.DashboardUtils.logDebug('Composant VPN non chargé, nouvelle tentative dans 500ms');
+            setTimeout(loadVPNClients, 500);
+            return;
+        }
+        
         try {
             const response = await fetch(`${window.DashboardUtils.config.API_BASE_URL}/vpn`);
             if (!response.ok) {
@@ -22,26 +35,6 @@ window.VPNModule = (function() {
             clientsContainer.innerHTML = '';
             
             if (data.clients && data.clients.length > 0) {
-                // Créer un tableau et l'ajouter directement au container
-                const table = document.createElement('table');
-                table.className = 'table table-hover';
-                
-                // Ajouter l'en-tête
-                const thead = document.createElement('thead');
-                thead.innerHTML = `
-                    <tr>
-                        <th>Nom</th>
-                        <th>Statut</th>
-                        <th>Trafic reçu</th>
-                        <th>Trafic envoyé</th>
-                        <th>Dernière activité</th>
-                    </tr>
-                `;
-                table.appendChild(thead);
-                
-                // Créer le corps du tableau
-                const tbody = document.createElement('tbody');
-                
                 // Traitement des clients
                 data.clients.forEach(client => {
                     // Déterminer le statut en fonction de la dernière activité
@@ -64,20 +57,16 @@ window.VPNModule = (function() {
                     row.innerHTML = `
                         <td><strong>${client.name}</strong></td>
                         <td>${statusBadge}</td>
-                        <td>${client.bytesReceived}</td>
-                        <td>${client.bytesSent}</td>
-                        <td>${client.lastSeen}</td>
+                        <td>${client.bytesReceived || '-'}</td>
+                        <td>${client.bytesSent || '-'}</td>
+                        <td>${client.lastSeen || '-'}</td>
                     `;
                     
-                    tbody.appendChild(row);
+                    clientsContainer.appendChild(row);
                 });
-                
-                table.appendChild(tbody);
-                clientsContainer.appendChild(table);
             } else {
-                const noClients = document.createElement('div');
-                noClients.className = 'alert alert-info';
-                noClients.textContent = 'Aucun client VPN connecté actuellement';
+                const noClients = document.createElement('tr');
+                noClients.innerHTML = '<td colspan="5" class="text-center">Aucun client VPN connecté actuellement</td>';
                 clientsContainer.appendChild(noClients);
             }
             
@@ -97,12 +86,20 @@ window.VPNModule = (function() {
                 vpnCounter.className = connectedClients > 0 ? 'badge bg-success ms-2' : 'badge bg-secondary ms-2';
             }
             
+            // Mettre à jour l'horodatage
             window.DashboardUtils.updateTime();
+            
+            // Mettre à jour une éventuelle indication de dernière mise à jour propre au composant VPN
+            const vpnLastUpdate = document.getElementById('vpn-last-update');
+            if (vpnLastUpdate) {
+                const now = new Date();
+                vpnLastUpdate.textContent = now.toLocaleTimeString();
+            }
         } catch (error) {
             window.DashboardUtils.logError('Erreur de chargement des clients VPN:', error);
             const clientsContainer = document.getElementById('vpn-clients');
             if (clientsContainer) {
-                clientsContainer.innerHTML = '<div class="alert alert-danger">Erreur de chargement des clients VPN</div>';
+                clientsContainer.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Erreur de chargement des clients VPN</td></tr>';
             }
         }
     }
@@ -139,6 +136,90 @@ window.VPNModule = (function() {
     // Initialisation du module
     function init() {
         window.DashboardUtils.logDebug('Initialisation du module VPN');
+        
+        // Écouter l'événement de chargement des composants si disponible
+        if (window.ComponentsManager) {
+            window.DashboardUtils.logDebug('ComponentsManager détecté, écoute des événements de chargement');
+            document.addEventListener('dashboardComponentLoaded', function(event) {
+                if (event.detail && event.detail.id === 'vpn-component') {
+                    window.DashboardUtils.logDebug('Composant VPN chargé, initialisation du module VPN');
+                    
+                    // Ajouter un gestionnaire d'événements pour le bouton de rafraîchissement
+                    const refreshButton = document.getElementById('refresh-vpn');
+                    if (refreshButton) {
+                        refreshButton.addEventListener('click', loadVPNClients);
+                    }
+                    
+                    // Configurer le bouton de toggling si présent
+                    const toggleButton = document.getElementById('vpn-toggle-btn');
+                    const vpnContent = document.getElementById('vpn-content');
+                    if (toggleButton && vpnContent) {
+                        toggleButton.addEventListener('click', function() {
+                            if (vpnContent.style.display === 'none') {
+                                vpnContent.style.display = 'block';
+                                toggleButton.innerHTML = '<i class="fas fa-minus"></i>';
+                            } else {
+                                vpnContent.style.display = 'none';
+                                toggleButton.innerHTML = '<i class="fas fa-plus"></i>';
+                            }
+                        });
+                    }
+                    
+                    setTimeout(loadVPNClients, 200);
+                }
+            });
+        } else {
+            // Initialisation classique
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function() {
+                    // Configuration des boutons
+                    const refreshButton = document.getElementById('refresh-vpn');
+                    if (refreshButton) {
+                        refreshButton.addEventListener('click', loadVPNClients);
+                    }
+                    
+                    // Configurer le bouton de toggling si présent
+                    const toggleButton = document.getElementById('vpn-toggle-btn');
+                    const vpnContent = document.getElementById('vpn-content');
+                    if (toggleButton && vpnContent) {
+                        toggleButton.addEventListener('click', function() {
+                            if (vpnContent.style.display === 'none') {
+                                vpnContent.style.display = 'block';
+                                toggleButton.innerHTML = '<i class="fas fa-minus"></i>';
+                            } else {
+                                vpnContent.style.display = 'none';
+                                toggleButton.innerHTML = '<i class="fas fa-plus"></i>';
+                            }
+                        });
+                    }
+                    
+                    setTimeout(loadVPNClients, 500);
+                });
+            } else {
+                // Configuration des boutons
+                const refreshButton = document.getElementById('refresh-vpn');
+                if (refreshButton) {
+                    refreshButton.addEventListener('click', loadVPNClients);
+                }
+                
+                // Configurer le bouton de toggling si présent
+                const toggleButton = document.getElementById('vpn-toggle-btn');
+                const vpnContent = document.getElementById('vpn-content');
+                if (toggleButton && vpnContent) {
+                    toggleButton.addEventListener('click', function() {
+                        if (vpnContent.style.display === 'none') {
+                            vpnContent.style.display = 'block';
+                            toggleButton.innerHTML = '<i class="fas fa-minus"></i>';
+                        } else {
+                            vpnContent.style.display = 'none';
+                            toggleButton.innerHTML = '<i class="fas fa-plus"></i>';
+                        }
+                    });
+                }
+                
+                setTimeout(loadVPNClients, 500);
+            }
+        }
     }
     
     // Appel de l'initialisation
@@ -146,6 +227,7 @@ window.VPNModule = (function() {
     
     // Interface publique du module
     return {
-        loadVPNClients
+        loadVPNClients,
+        refresh: loadVPNClients
     };
 })();

@@ -299,9 +299,9 @@ app.get('/api/system', async (req, res) => {
       },
       memory: {
         total: (memData.total / (1024 * 1024 * 1024)).toFixed(2) + ' GB',
-        used: (memData.used / (1024 * 1024 * 1024)).toFixed(2) + ' GB',
-        free: (memData.free / (1024 * 1024 * 1024)).toFixed(2) + ' GB',
-        usedPercentage: ((memData.used / memData.total) * 100).toFixed(2)
+        used: ((memData.total - memData.available) / (1024 * 1024 * 1024)).toFixed(2) + ' GB',
+        free: (memData.available / (1024 * 1024 * 1024)).toFixed(2) + ' GB',
+        usedPercentage: (((memData.total - memData.available) / memData.total) * 100).toFixed(2)
       },
       temperature: {
         main: tempData.main || 'N/A',

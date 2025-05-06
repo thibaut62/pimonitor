@@ -3,12 +3,13 @@
 window.CPUModule = (function() {
     // Variables privées du module
     let cpuChart = null;
+    let initialized = false;
     
     // Initialisation du graphique CPU
     function initCPUChart() {
         const cpuChartElement = document.getElementById('cpuChart');
         if (!cpuChartElement) {
-            window.DashboardUtils.logError('Élément cpuChart introuvable');
+            window.DashboardUtils.logDebug('Élément cpuChart introuvable - attente du chargement du composant');
             return;
         }
         
@@ -53,6 +54,7 @@ window.CPUModule = (function() {
                     }
                 }
             });
+            initialized = true;
             window.DashboardUtils.logDebug('Graphique CPU initialisé');
         } catch (error) {
             window.DashboardUtils.logError('Erreur lors de l\'initialisation du graphique CPU:', error);
@@ -72,8 +74,28 @@ window.CPUModule = (function() {
         }
     }
     
+    // Vérifier si les éléments DOM requis sont présents
+    function checkRequiredElements() {
+        return document.getElementById('cpu-load') && 
+               document.getElementById('cpu-progress') && 
+               document.getElementById('cpu-model') && 
+               document.getElementById('cpu-cores') && 
+               document.getElementById('cpu-temp');
+    }
+    
     // Chargement des informations CPU
     async function loadCPUInfo() {
+        // Vérifier si les éléments requis sont présents
+        if (!checkRequiredElements()) {
+            window.DashboardUtils.logDebug('Composant CPU non chargé, nouvelle tentative dans 500ms');
+            setTimeout(loadCPUInfo, 500);
+            return;
+        }
+        
+        if (!initialized && document.getElementById('cpuChart')) {
+            initCPUChart();
+        }
+        
         try {
             const response = await fetch(`${window.DashboardUtils.config.API_BASE_URL}/system`);
             if (!response.ok) {
@@ -85,31 +107,45 @@ window.CPUModule = (function() {
             
             // Mise à jour CPU
             if (data.cpu) {
-                document.getElementById('cpu-load').textContent = `${data.cpu.load}%`;
-                document.getElementById('cpu-progress').style.width = `${data.cpu.load}%`;
-                document.getElementById('cpu-progress').setAttribute('aria-valuenow', data.cpu.load);
+                const cpuLoad = document.getElementById('cpu-load');
+                const cpuProgress = document.getElementById('cpu-progress');
+                const cpuModel = document.getElementById('cpu-model');
+                const cpuCores = document.getElementById('cpu-cores');
                 
-                if (data.cpu.model) {
-                    document.getElementById('cpu-model').textContent = `Modèle: ${data.cpu.model}`;
+                if (cpuLoad) cpuLoad.textContent = `${data.cpu.load}%`;
+                if (cpuProgress) {
+                    cpuProgress.style.width = `${data.cpu.load}%`;
+                    cpuProgress.setAttribute('aria-valuenow', data.cpu.load);
                 }
                 
-                if (data.cpu.cores) {
-                    document.getElementById('cpu-cores').textContent = `Cœurs: ${data.cpu.cores}`;
+                if (data.cpu.model && cpuModel) {
+                    cpuModel.textContent = `Modèle: ${data.cpu.model}`;
+                }
+                
+                if (data.cpu.cores && cpuCores) {
+                    cpuCores.textContent = `Cœurs: ${data.cpu.cores}`;
                 }
             }
             
             // Mise à jour température
             if (data.temperature && data.temperature.main) {
-                document.getElementById('cpu-temp').textContent = `Température: ${data.temperature.main}°C`;
+                const cpuTemp = document.getElementById('cpu-temp');
+                if (cpuTemp) {
+                    cpuTemp.textContent = `Température: ${data.temperature.main}°C`;
+                }
             }
             
             // Initialiser le graphique si ce n'est pas déjà fait
-            if (!cpuChart) {
+            if (!cpuChart && document.getElementById('cpuChart')) {
                 initCPUChart();
             }
             
-            document.getElementById('connection-status').className = 'badge bg-success';
-            document.getElementById('connection-status').textContent = 'Connecté';
+            const connectionStatus = document.getElementById('connection-status');
+            if (connectionStatus) {
+                connectionStatus.className = 'badge bg-success';
+                connectionStatus.textContent = 'Connecté';
+            }
+            
             window.DashboardUtils.updateTime();
         } catch (error) {
             window.DashboardUtils.logError('Erreur de chargement des informations CPU:', error);
@@ -118,26 +154,73 @@ window.CPUModule = (function() {
     
     // Mise à jour en temps réel des informations CPU
     function updateRealtime(data) {
+        // Vérifier si les éléments requis sont présents
+        if (!checkRequiredElements()) {
+            return;
+        }
+        
         // Mise à jour CPU
         if (data.cpu && data.cpu.load) {
-            document.getElementById('cpu-load').textContent = `${data.cpu.load}%`;
-            document.getElementById('cpu-progress').style.width = `${data.cpu.load}%`;
-            document.getElementById('cpu-progress').setAttribute('aria-valuenow', data.cpu.load);
+            const cpuLoad = document.getElementById('cpu-load');
+            const cpuProgress = document.getElementById('cpu-progress');
+            
+            if (cpuLoad) cpuLoad.textContent = `${data.cpu.load}%`;
+            if (cpuProgress) {
+                cpuProgress.style.width = `${data.cpu.load}%`;
+                cpuProgress.setAttribute('aria-valuenow', data.cpu.load);
+            }
             
             // Mise à jour graphique CPU
-            updateCPUChart(parseFloat(data.cpu.load));
+            if (initialized) {
+                updateCPUChart(parseFloat(data.cpu.load));
+            } else if (document.getElementById('cpuChart')) {
+                initCPUChart();
+                updateCPUChart(parseFloat(data.cpu.load));
+            }
         }
         
         // Mise à jour température
         if (data.temperature && data.temperature.main) {
-            document.getElementById('cpu-temp').textContent = `Température: ${data.temperature.main}°C`;
+            const cpuTemp = document.getElementById('cpu-temp');
+            if (cpuTemp) {
+                cpuTemp.textContent = `Température: ${data.temperature.main}°C`;
+            }
         }
     }
     
     // Initialisation du module
     function init() {
         window.DashboardUtils.logDebug('Initialisation du module CPU');
-        document.addEventListener('DOMContentLoaded', initCPUChart);
+        
+        // Écouter l'événement de chargement des composants si disponible
+        if (window.ComponentsManager) {
+            window.DashboardUtils.logDebug('ComponentsManager détecté, écoute des événements de chargement');
+            document.addEventListener('dashboardComponentLoaded', function(event) {
+                if (event.detail && (event.detail.id === 'cpu-component' || event.detail.id === 'cpu-chart-component')) {
+                    window.DashboardUtils.logDebug(`Composant ${event.detail.id} chargé, initialisation du module CPU`);
+                    setTimeout(loadCPUInfo, 200); // Laisser un petit délai pour que le DOM se stabilise
+                }
+            });
+        } else {
+            // Initialisation classique
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function() {
+                    setTimeout(function() {
+                        if (document.getElementById('cpuChart')) {
+                            initCPUChart();
+                        }
+                        loadCPUInfo();
+                    }, 500);
+                });
+            } else {
+                setTimeout(function() {
+                    if (document.getElementById('cpuChart')) {
+                        initCPUChart();
+                    }
+                    loadCPUInfo();
+                }, 500);
+            }
+        }
     }
     
     // Appel de l'initialisation

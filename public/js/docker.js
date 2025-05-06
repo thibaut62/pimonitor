@@ -1,8 +1,22 @@
 // docker.js - Module pour la gestion des conteneurs Docker
 
 window.DockerModule = (function() {
+    // Vérifier si les éléments DOM requis sont présents
+    function checkRequiredElements() {
+        return document.getElementById('docker-containers') &&
+               document.getElementById('docker-counter-running') &&
+               document.getElementById('docker-counter-total');
+    }
+    
     // Chargement des conteneurs Docker
     async function loadDockerContainers() {
+        // Vérifier si les éléments requis sont présents
+        if (!checkRequiredElements()) {
+            window.DashboardUtils.logDebug('Composant Docker non chargé, nouvelle tentative dans 500ms');
+            setTimeout(loadDockerContainers, 500);
+            return;
+        }
+        
         try {
             const response = await fetch(`${window.DashboardUtils.config.API_BASE_URL}/docker`);
             if (!response.ok) {
@@ -31,8 +45,6 @@ window.DockerModule = (function() {
                         <td><span class="badge bg-${statusClass}">${container.status}</span></td>
                         <td id="cpu-${container.id}">-</td>
                         <td id="mem-${container.id}">-</td>
-
-                        </td>
                     `;
                     containersList.appendChild(row);
                     
@@ -49,7 +61,7 @@ window.DockerModule = (function() {
                 });
             } else {
                 const row = document.createElement('tr');
-                row.innerHTML = '<td colspan="7" class="text-center">Aucun conteneur Docker en cours d\'exécution</td>';
+                row.innerHTML = '<td colspan="5" class="text-center">Aucun conteneur Docker en cours d\'exécution</td>';
                 containersList.appendChild(row);
             }
             
@@ -72,7 +84,7 @@ window.DockerModule = (function() {
             window.DashboardUtils.logError('Erreur de chargement des conteneurs Docker:', error);
             const containersList = document.getElementById('docker-containers');
             if (containersList) {
-                containersList.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Erreur de chargement des conteneurs</td></tr>';
+                containersList.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Erreur de chargement des conteneurs</td></tr>';
             }
         }
     }
@@ -152,6 +164,90 @@ window.DockerModule = (function() {
     // Initialisation du module
     function init() {
         window.DashboardUtils.logDebug('Initialisation du module Docker');
+        
+        // Écouter l'événement de chargement des composants si disponible
+        if (window.ComponentsManager) {
+            window.DashboardUtils.logDebug('ComponentsManager détecté, écoute des événements de chargement');
+            document.addEventListener('dashboardComponentLoaded', function(event) {
+                if (event.detail && event.detail.id === 'docker-component') {
+                    window.DashboardUtils.logDebug('Composant Docker chargé, initialisation du module Docker');
+                    
+                    // Configurer le bouton de rafraîchissement
+                    const refreshButton = document.getElementById('refresh-docker');
+                    if (refreshButton) {
+                        refreshButton.addEventListener('click', loadDockerContainers);
+                    }
+                    
+                    // Configurer le bouton de toggling
+                    const toggleButton = document.getElementById('docker-toggle-btn');
+                    const dockerContent = document.getElementById('docker-content');
+                    if (toggleButton && dockerContent) {
+                        toggleButton.addEventListener('click', function() {
+                            if (dockerContent.style.display === 'none') {
+                                dockerContent.style.display = 'block';
+                                toggleButton.innerHTML = '<i class="fas fa-minus"></i>';
+                            } else {
+                                dockerContent.style.display = 'none';
+                                toggleButton.innerHTML = '<i class="fas fa-plus"></i>';
+                            }
+                        });
+                    }
+                    
+                    setTimeout(loadDockerContainers, 200);
+                }
+            });
+        } else {
+            // Initialisation classique
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function() {
+                    // Configurer le bouton de rafraîchissement
+                    const refreshButton = document.getElementById('refresh-docker');
+                    if (refreshButton) {
+                        refreshButton.addEventListener('click', loadDockerContainers);
+                    }
+                    
+                    // Configurer le bouton de toggling
+                    const toggleButton = document.getElementById('docker-toggle-btn');
+                    const dockerContent = document.getElementById('docker-content');
+                    if (toggleButton && dockerContent) {
+                        toggleButton.addEventListener('click', function() {
+                            if (dockerContent.style.display === 'none') {
+                                dockerContent.style.display = 'block';
+                                toggleButton.innerHTML = '<i class="fas fa-minus"></i>';
+                            } else {
+                                dockerContent.style.display = 'none';
+                                toggleButton.innerHTML = '<i class="fas fa-plus"></i>';
+                            }
+                        });
+                    }
+                    
+                    setTimeout(loadDockerContainers, 500);
+                });
+            } else {
+                // Configurer le bouton de rafraîchissement
+                const refreshButton = document.getElementById('refresh-docker');
+                if (refreshButton) {
+                    refreshButton.addEventListener('click', loadDockerContainers);
+                }
+                
+                // Configurer le bouton de toggling
+                const toggleButton = document.getElementById('docker-toggle-btn');
+                const dockerContent = document.getElementById('docker-content');
+                if (toggleButton && dockerContent) {
+                    toggleButton.addEventListener('click', function() {
+                        if (dockerContent.style.display === 'none') {
+                            dockerContent.style.display = 'block';
+                            toggleButton.innerHTML = '<i class="fas fa-minus"></i>';
+                        } else {
+                            dockerContent.style.display = 'none';
+                            toggleButton.innerHTML = '<i class="fas fa-plus"></i>';
+                        }
+                    });
+                }
+                
+                setTimeout(loadDockerContainers, 500);
+            }
+        }
     }
     
     // Appel de l'initialisation
@@ -159,6 +255,7 @@ window.DockerModule = (function() {
     
     // Interface publique du module
     return {
-        loadDockerContainers
+        loadDockerContainers,
+        refresh: loadDockerContainers
     };
 })();

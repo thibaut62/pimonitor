@@ -1,8 +1,20 @@
 // earnapp.js - Module pour la gestion d'EarnApp
 
 window.EarnAppModule = (function() {
+    // Vérifier si les éléments DOM requis sont présents
+    function checkRequiredElements() {
+        return document.getElementById('earnapp-status');
+    }
+    
     // Chargement des statistiques EarnApp
     async function loadEarnAppStatus() {
+        // Vérifier si les éléments requis sont présents
+        if (!checkRequiredElements()) {
+            window.DashboardUtils.logDebug('Composant EarnApp non chargé, nouvelle tentative dans 500ms');
+            setTimeout(loadEarnAppStatus, 500);
+            return;
+        }
+        
         try {
             const response = await fetch(`${window.DashboardUtils.config.API_BASE_URL}/earnapp`);
             if (!response.ok) {
@@ -55,6 +67,12 @@ window.EarnAppModule = (function() {
     
     // Chargement des statistiques réseau d'EarnApp
     async function loadEarnAppNetworkStats() {
+        const networkContainer = document.getElementById('earnapp-network');
+        if (!networkContainer) {
+            window.DashboardUtils.logError('Élément earnapp-network introuvable');
+            return;
+        }
+        
         try {
             const response = await fetch(`${window.DashboardUtils.config.API_BASE_URL}/earnapp/network`);
             if (!response.ok) {
@@ -63,11 +81,6 @@ window.EarnAppModule = (function() {
             
             const data = await response.json();
             window.DashboardUtils.logDebug('Données réseau EarnApp reçues:', data);
-            
-            const statusContainer = document.getElementById('earnapp-network');
-            if (!statusContainer) {
-                return;
-            }
             
             // Si nous avons déjà reçu des données auparavant, calculer le taux
             let rxRate = 0;
@@ -105,7 +118,7 @@ window.EarnAppModule = (function() {
             }
             
             // Mettre à jour l'interface utilisateur
-            statusContainer.innerHTML = `
+            networkContainer.innerHTML = `
                 <div class="card mb-3">
                     <div class="card-header bg-info text-white">
                         <i class="fas fa-network-wired me-2"></i> Trafic réseau
@@ -135,20 +148,57 @@ window.EarnAppModule = (function() {
             `;
         } catch (error) {
             window.DashboardUtils.logError('Erreur de chargement des stats réseau EarnApp:', error);
-            const statusContainer = document.getElementById('earnapp-network');
-            if (statusContainer) {
-                statusContainer.innerHTML = `
-                    <div class="alert alert-danger">
-                        Impossible de charger les statistiques réseau
-                    </div>
-                `;
-            }
+            networkContainer.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Impossible de charger les statistiques réseau
+                </div>
+            `;
         }
     }
     
     // Initialisation du module
     function init() {
         window.DashboardUtils.logDebug('Initialisation du module EarnApp');
+        
+        // Écouter l'événement de chargement des composants si disponible
+        if (window.ComponentsManager) {
+            window.DashboardUtils.logDebug('ComponentsManager détecté, écoute des événements de chargement');
+            document.addEventListener('dashboardComponentLoaded', function(event) {
+                if (event.detail && event.detail.id === 'earnapp-component') {
+                    window.DashboardUtils.logDebug('Composant EarnApp chargé, initialisation du module EarnApp');
+                    
+                    // Configurer le bouton de rafraîchissement
+                    const refreshButton = document.getElementById('refresh-earnapp');
+                    if (refreshButton) {
+                        refreshButton.addEventListener('click', loadEarnAppStatus);
+                    }
+                    
+                    setTimeout(loadEarnAppStatus, 200);
+                }
+            });
+        } else {
+            // Initialisation classique
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function() {
+                    // Configurer le bouton de rafraîchissement
+                    const refreshButton = document.getElementById('refresh-earnapp');
+                    if (refreshButton) {
+                        refreshButton.addEventListener('click', loadEarnAppStatus);
+                    }
+                    
+                    setTimeout(loadEarnAppStatus, 500);
+                });
+            } else {
+                // Configurer le bouton de rafraîchissement
+                const refreshButton = document.getElementById('refresh-earnapp');
+                if (refreshButton) {
+                    refreshButton.addEventListener('click', loadEarnAppStatus);
+                }
+                
+                setTimeout(loadEarnAppStatus, 500);
+            }
+        }
     }
     
     // Appel de l'initialisation
@@ -156,6 +206,7 @@ window.EarnAppModule = (function() {
     
     // Interface publique du module
     return {
-        loadEarnAppStatus
+        loadEarnAppStatus,
+        refresh: loadEarnAppStatus
     };
 })();

@@ -7,556 +7,172 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <link href="css/styles.css" rel="stylesheet">
     <link rel="stylesheet" href="css/themes.css">
+    <style>
+        /* Styles pour les blocs déplaçables */
+        .dashboard-block {
+            transition: transform 0.2s ease;
+            height: 100%;
+            min-width: 300px;
+        }
+        
+        /* Mise en page en grille pour les blocs déplaçables */
+        #sortable-dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            grid-gap: 20px;
+            width: 100%;
+        }
+        
+        /* Blocs qui prennent toute la largeur */
+        .dashboard-block.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .sortable-chosen {
+            box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+            z-index: 1000;
+        }
+        
+        .sortable-ghost {
+            opacity: 0.4;
+        }
+        
+        .sortable-handle {
+            cursor: move;
+        }
+        
+        .sortable-fallback {
+            opacity: 0.8;
+            transform: scale(0.98);
+        }
+        
+        /* Icône de poignée */
+        .drag-handle {
+            cursor: move;
+            opacity: 0.5;
+            margin-left: 8px;
+        }
+    </style>
 </head>
 <body>
 
-<!-- À ajouter dans la barre de navigation ou dans l'en-tête -->
-<div class="theme-switch-wrapper">
-  <span class="theme-icon"><i class="fas fa-sun"></i></span>
-  <label class="theme-switch">
-    <input type="checkbox" id="theme-toggle">
-    <span class="slider"></span>
-  </label>
-  <span class="theme-icon" style="display:none;"><i class="fas fa-moon"></i></span>
-</div>
+<div class="container">
+    <header class="mb-4 d-flex justify-content-between align-items-center">
+        <h1><i class="fas fa-microchip text-danger"></i> Tableau de bord Raspberry Pi (192.168.0.2)</h1>
+        <div class="d-flex align-items-center">
+            <!-- Switch de thème -->
+            <div class="theme-switch-wrapper me-3">
+                <span class="theme-icon"><i class="fas fa-sun"></i></span>
+                <label class="theme-switch">
+                    <input type="checkbox" id="theme-toggle">
+                    <span class="slider"></span>
+                </label>
+                <span class="theme-icon" style="display:none;"><i class="fas fa-moon"></i></span>
+            </div>
+            
+            <!-- Bouton de réinitialisation de l'ordre -->
+            <button id="reset-dashboard-order" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-undo me-1"></i> Réinitialiser l'ordre
+            </button>
+            
+            <div class="ms-3">
+                <span id="connection-status" class="badge bg-warning">En attente...</span>
+                <span id="update-time" class="text-muted ms-2">Dernière mise à jour: --:--:--</span>
+            </div>
+        </div>
+    </header>
 
-    <div class="container">
-        <header class="mb-4">
-            <div class="d-flex justify-content-between align-items-center">
-                <h1><i class="fas fa-microchip text-danger"></i> Tableau de bord Raspberry Pi (192.168.0.2)</h1>
-                <div>
-                    <span id="connection-status" class="badge bg-warning">En attente...</span>
-                    <span id="update-time" class="text-muted ms-2">Dernière mise à jour: --:--:--</span>
-                </div>
-            </div>
-        </header>
-                <!-- Bloc pour Google Sheet -->
-<div class="row mb-4">
-  <div class="col-12">
-    <div class="card">
-      <div class="card-header d-flex justify-content-between align-items-center">
-        <div>
-          <i class="fas fa-table me-2"></i> Google Sheet
-        </div>
-        <div class="d-flex">
-          <button id="refresh-sheet" class="btn btn-sm btn-outline-light me-2" title="Rafraîchir">
-            <i class="fas fa-sync-alt"></i>
-          </button>
-          <button id="sheet-toggle-btn" class="btn btn-sm btn-outline-light" title="Réduire/Agrandir">
-            <i class="fas fa-minus"></i>
-          </button>
-        </div>
-      </div>
-      
-      <div id="sheet-content">
-        <div class="card-body p-0">
-          <!-- Configuration du Google Sheet -->
-          <div id="sheet-config" class="p-3 bg-light" style="display: none;">
-            <div class="row">
-              <div class="col-md-8">
-                <div class="input-group">
-                  <span class="input-group-text">URL du Google Sheet</span>
-                  <input type="text" id="sheet-url" class="form-control" 
-                         placeholder="https://docs.google.com/spreadsheets/d/1BUFBflVSR9kIC9vDtbHRbYvij0Xn8XouiAXfBroBZ4s/edit?usp=sharing">
-                </div>
-              </div>
-              <div class="col-md-4">
-                <button id="save-sheet-config" class="btn btn-primary">Enregistrer</button>
-                <button id="cancel-sheet-config" class="btn btn-secondary ms-2">Annuler</button>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Affichage du Google Sheet -->
-          <div id="sheet-container" style="height: 600px; width: 100%;">
-            <iframe id="sheet-iframe" src="" style="width: 100%; height: 100%; border: none;"></iframe>
-          </div>
+    <!-- Container pour les blocs déplaçables -->
+    <div id="sortable-dashboard">
+        <!-- Google Sheet (pleine largeur) -->
+        <div class="dashboard-block full-width" data-block-id="google-sheet">
+            <div id="google-sheet-component"></div>
         </div>
         
-        <div class="card-footer">
-          <div class="d-flex justify-content-between">
-            <button id="configure-sheet" class="btn btn-sm btn-outline-secondary">
-              <i class="fas fa-cog me-1"></i> Configurer
-            </button>
-            <small class="text-muted">Dernière mise à jour: <span id="sheet-last-update">Jamais</span></small>
-          </div>
+        <!-- Date -->
+        <div class="dashboard-block" data-block-id="dateinfo">
+            <div id="dateinfo-component"></div>
         </div>
-      </div>
+        
+        <!-- Météo -->
+        <div class="dashboard-block" data-block-id="weather">
+            <div id="weather-component"></div>
+        </div>
+        
+        <!-- CPU 
+        <div class="dashboard-block" data-block-id="cpu">
+            <div id="cpu-component"></div>
+        </div> -->
+        
+        <!-- Mémoire -->
+        <div class="dashboard-block" data-block-id="memory">
+            <div id="memory-component"></div>
+        </div> 
+        
+        <!-- Stockage -->
+        <div class="dashboard-block" data-block-id="storage">
+            <div id="storage-component"></div>
+        </div>
+        
+        <!-- Graphique CPU -->
+        <div class="dashboard-block" data-block-id="cpu-chart">
+            <div id="cpu-chart-component"></div>
+        </div>
+        
+        <!-- Graphique réseau -->
+        <div class="dashboard-block" data-block-id="network-chart">
+            <div id="network-chart-component"></div>
+        </div>
+        
+        <!-- Réseau 
+        <div class="dashboard-block" data-block-id="network">
+            <div id="network-component"></div>
+        </div> -->
+        
+        <!-- VPN -->
+        <div class="dashboard-block" data-block-id="vpn">
+            <div id="vpn-component"></div>
+        </div>
+        
+        <!-- Docker -->
+        <div class="dashboard-block" data-block-id="docker">
+            <div id="docker-component"></div>
+        </div>
+        
+        <!-- EarnApp -->
+        <div class="dashboard-block" data-block-id="earnapp">
+            <div id="earnapp-component"></div>
+        </div>
     </div>
-  </div>
+
+    <footer class="mt-4 mb-4 text-center text-muted">
+        <small>Tableau de bord Raspberry Pi &copy; 2025 | v1.4</small>
+    </footer>
 </div>
-                <!-- Bloc pour la date et météo -->
-                <div class="row mb-4">
-                    <div class="col-md-8">
-                        <div class="card">
-                            <div class="card-body" id="date-info">
-                                Chargement des informations de date...
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card">
-                            <div class="card-header">
 
-                                <div class="card">
-                                    <div class="card-header d-flex justify-content-between align-items-center">
-                                      <div class="d-flex align-items-center">
-                                        <i class="fas fa-cloud me-2"></i> 
-                                        <span>Météo Saint Laurent Blangy</span>
-                                        <span id="weather-temp-collapsed" class="ms-3 fw-bold">28.8°C</span>
-                                      </div>
-                                      <div class="d-flex">
-                                        <button id="refresh-weather" class="btn btn-sm btn-outline-light me-2" title="Rafraîchir les données météo">
-                                          <i class="fas fa-sync-alt"></i>
-                                        </button>
-                                        <button id="weather-toggle-btn" class="btn btn-sm btn-outline-light" title="Réduire/Agrandir">
-                                          <i class="fas fa-plus"></i>
-                                        </button>
-                                      </div>
-                                    </div>
-                                    
-                                    <div id="weather-content" style="display: none;">
-                                      <div class="card-body">
-                                        <div id="weather-error" class="alert alert-danger" style="display: none;"></div>
-                                        
-                                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center">
-                                          <!-- Affichage principal -->
-                                          <div class="d-flex align-items-center mb-3 mb-md-0">
-                                            <div class="me-3">
-                                              <i id="weather-icon" class="fas fa-cloud display-5"></i>
-                                            </div>
-                                            <div>
-                                              <div id="weather-temp" class="display-4 fw-bold">28.8°C</div>
-                                              <div id="weather-desc" class="text-muted">partiellement nuageux</div>
-                                            </div>
-                                          </div>
-                                          
-                                          <!-- Affichage détails -->
-                                          <div class="d-flex flex-wrap justify-content-between">
-                                            <div class="me-4 mb-2">
-                                              <i class="fas fa-thermometer-half me-2"></i> Ressenti: 
-                                              <span id="weather-feels" class="fw-bold">28.9°C</span>
-                                            </div>
-                                            <div class="me-4 mb-2">
-                                              <i class="fas fa-tint me-2"></i> Humidité: 
-                                              <span id="weather-humidity" class="fw-bold">36%</span>
-                                            </div>
-                                            <div class="me-4 mb-2">
-                                              <i class="fas fa-wind me-2"></i> Vent: 
-                                              <span id="weather-wind" class="fw-bold">9.7 m/s</span>
-                                            </div>
-                                            <div class="me-4 mb-2">
-                                              <i class="fas fa-tachometer-alt me-2"></i> Pression: 
-                                              <span id="weather-pressure" class="fw-bold">1014.5 hPa</span>
-                                            </div>
-                                            <div class="me-4 mb-2">
-                                              <i class="fas fa-arrow-up me-2"></i> Max: 
-                                              <span id="weather-temp-max" class="fw-bold">28.8°C</span>
-                                            </div>
-                                            <div class="mb-2">
-                                              <i class="fas fa-arrow-down me-2"></i> Min: 
-                                              <span id="weather-temp-min" class="fw-bold">16.6°C</span>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      </div>
-                                      
-                                      <div class="card-footer text-muted">
-                                        <small>Dernière mise à jour: <span id="weather-last-update">16:04:16</span></small>
-                                      </div>
-                                    </div>
-                                  </div>
-                                  
-                                  <script>
-                                  // Script pour gérer le repli/dépli du widget météo
-                                  document.addEventListener('DOMContentLoaded', function() {
-                                    const toggleBtn = document.getElementById('weather-toggle-btn');
-                                    const weatherContent = document.getElementById('weather-content');
-                                    const weatherTemp = document.getElementById('weather-temp');
-                                    const weatherTempCollapsed = document.getElementById('weather-temp-collapsed');
-                                    let isCollapsed = true; // Commence en mode réduit
-                                    
-                                    if (toggleBtn && weatherContent) {
-                                      toggleBtn.addEventListener('click', function() {
-                                        if (isCollapsed) {
-                                          // Dépli
-                                          weatherContent.style.display = 'block';
-                                          toggleBtn.innerHTML = '<i class="fas fa-minus"></i>';
-                                          weatherTempCollapsed.style.display = 'none';
-                                          isCollapsed = false;
-                                        } else {
-                                          // Repli
-                                          weatherContent.style.display = 'none';
-                                          toggleBtn.innerHTML = '<i class="fas fa-plus"></i>';
-                                          weatherTempCollapsed.style.display = 'inline';
-                                          isCollapsed = true;
-                                        }
-                                      });
-                                    }
-                                    
-                                    // S'assurer que lorsque la température principale est mise à jour,
-                                    // la version réduite est également mise à jour
-                                    // Cette fonction sera appelée par votre code existant qui met à jour weather-temp
-                                    function updateWeatherTemp(temp) {
-                                      if (weatherTemp) weatherTemp.textContent = temp;
-                                      if (weatherTempCollapsed) weatherTempCollapsed.textContent = temp;
-                                    }
-                                    
-                                    // Exposer la fonction pour qu'elle puisse être appelée par d'autres scripts
-                                    window.updateWeatherTemp = updateWeatherTemp;
-                                    
-                                    // Simulation pour tester la mise à jour
-                                    // À supprimer dans l'implémentation réelle
-                                    /*
-                                    setInterval(function() {
-                                      const randomTemp = (25 + Math.random() * 5).toFixed(1) + '°C';
-                                      updateWeatherTemp(randomTemp);
-                                    }, 5000);
-                                    */
-                                  });
-                                  </script>
-                    
-                </div>
-            </div>
-        </div>
+<!-- Chargement du gestionnaire de composants en premier -->
+<script src="js/components-manager.js"></script>
 
-        <div class="row">
-            <!-- Carte CPU -->
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <i class="fas fa-microchip me-2"></i> CPU
-                    </div>
-                    <div class="card-body">
-                        <div class="metric">
-                            <div class="metric-value" id="cpu-load">0%</div>
-                            <div class="metric-label">Utilisation CPU</div>
-                        </div>
-                        <div class="progress mb-3">
-                            <div id="cpu-progress" class="progress-bar bg-primary" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
-                        <div class="d-flex justify-content-between">
-                            <div class="small text-muted" id="cpu-model">Modèle: --</div>
-                            <div class="small text-muted" id="cpu-cores">Cœurs: --</div>
-                        </div>
-                        <div class="small text-muted" id="cpu-temp">Température: -- °C</div>
-                    </div>
-                </div>
-            </div>
+<!-- Chargement des scripts modulaires -->
+<script src="js/main.js"></script>
+<script src="js/googlesheet.js"></script>
+<script src="js/cpu.js"></script>
+<script src="js/memory.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/network.js"></script>
+<script src="js/docker.js"></script>
+<script src="js/earnapp.js"></script>
+<script src="js/vpn.js"></script>
+<script src="js/dateinfo.js"></script>
+<script src="js/weather.js"></script>
+<script src="js/theme-switcher.js"></script>
+<script src="js/chart-theme.js"></script>
 
-            <!-- Carte mémoire -->
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <i class="fas fa-memory me-2"></i> Mémoire
-                    </div>
-                    <div class="card-body">
-                        <div class="metric">
-                            <div class="metric-value" id="memory-used">0 / 0 GB</div>
-                            <div class="metric-label">Mémoire utilisée</div>
-                        </div>
-                        <div class="progress mb-3">
-                            <div id="memory-progress" class="progress-bar bg-success" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
-                        <div class="d-flex justify-content-between">
-                            <div class="small text-muted" id="memory-free">Libre: -- GB</div>
-                            <div class="small text-muted" id="memory-percentage">Utilisée: --%</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<!-- Chargement du script pour les blocs déplaçables (en dernier) -->
+<script src="js/dashboard-sortable.js"></script>
 
-            <!-- Carte stockage -->
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <i class="fas fa-hdd me-2"></i> Stockage
-                    </div>
-                    <div class="card-body">
-                        <div id="disk-info">
-                            Chargement des données de stockage...
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row">
-            <!-- Graphique CPU en temps réel -->
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <i class="fas fa-chart-line me-2"></i> Utilisation CPU en temps réel
-                    </div>
-                    <div class="card-body">
-                        <div style="height: 250px; width: 100%;">
-                            <canvas id="cpuChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Graphique réseau en temps réel -->
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <i class="fas fa-network-wired me-2"></i> Trafic réseau en temps réel
-                    </div>
-                    <div class="card-body">
-                        <div style="height: 250px; width: 100%;">
-                            <canvas id="networkChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-              <div>
-                <i class="fas fa-shield-alt me-2"></i> Clients VPN
-                <span id="vpn-counter" class="badge bg-success ms-2">1</span>
-              </div>
-              <div>
-                <button id="refresh-vpn" class="btn btn-sm btn-outline-light me-2" title="Rafraîchir">
-                  <i class="fas fa-sync-alt"></i>
-                </button>
-                <button id="vpn-toggle-btn" class="btn btn-sm btn-outline-light" title="Réduire/Agrandir">
-                  <i class="fas fa-minus"></i>
-                </button>
-              </div>
-            </div>
-            
-            <div id="vpn-content">
-              <div class="card-body">
-                <div class="table-responsive">
-                  <table class="table table-hover">
-
-                    <tbody id="vpn-clients">
-                      <!-- Exemple de données -->
-                      <tr>
-                        <td><strong>pixel7</strong></td>
-                        <td><span class="badge bg-success">Connecté</span></td>
-                        <td>116 MiB</td>
-                        <td>1.1 GiB</td>
-                        <td>May 01 2025 - 17:00:44</td>
-                      </tr>
-                      <!-- Fin exemple de données -->
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <script>
-          // Script pour gérer le repli/dépli du widget VPN
-          document.addEventListener('DOMContentLoaded', function() {
-            const toggleBtn = document.getElementById('vpn-toggle-btn');
-            const vpnContent = document.getElementById('vpn-content');
-            let isCollapsed = false;
-            
-            if (toggleBtn && vpnContent) {
-              toggleBtn.addEventListener('click', function() {
-                if (isCollapsed) {
-                  // Dépli
-                  vpnContent.style.display = 'block';
-                  toggleBtn.innerHTML = '<i class="fas fa-minus"></i>';
-                  isCollapsed = false;
-                } else {
-                  // Repli
-                  vpnContent.style.display = 'none';
-                  toggleBtn.innerHTML = '<i class="fas fa-plus"></i>';
-                  isCollapsed = true;
-                }
-              });
-            }
-            
-            // Fonction pour mettre à jour le compteur VPN
-            window.updateVpnCounter = function(count) {
-              const counter = document.getElementById('vpn-counter');
-              if (counter) {
-                counter.textContent = count;
-                counter.className = count > 0 ? 'badge bg-success ms-2' : 'badge bg-secondary ms-2';
-              }
-            };
-          });
-          </script>
-
-            <!-- Conteneurs Docker -->
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                  <div>
-                    <i class="fab fa-docker me-2"></i> Conteneurs Docker
-                    <span id="docker-counter-running" class="badge bg-success ms-2">3</span>
-                    <span id="docker-counter-total" class="badge bg-secondary ms-1">6</span>
-                  </div>
-                  <div>
-                    <button id="refresh-docker" class="btn btn-sm btn-outline-light me-2" title="Rafraîchir">
-                      <i class="fas fa-sync-alt"></i>
-                    </button>
-                    <button id="docker-toggle-btn" class="btn btn-sm btn-outline-light" title="Réduire/Agrandir">
-                      <i class="fas fa-minus"></i>
-                    </button>
-                  </div>
-                </div>
-                
-                <div id="docker-content">
-                  <div class="card-body">
-                    <div class="table-responsive">
-                      <table class="table table-hover">
-                        <thead>
-                          <tr>
-                            <th>Nom</th>
-                            <th>Image</th>
-                            <th>Statut</th>
-                            <th>CPU</th>
-                            <th>Mémoire</th>
-
-                          </tr>
-                        </thead>
-                        <tbody id="docker-containers">
-                          <!-- Données réelles de l'image -->
-                          <tr>
-                            <td>wordpress-docker-wordpress-1</td>
-                            <td>arm64v8/wordpress:latest</td>
-                            <td><span class="badge bg-success">Up 23 hours</span></td>
-                            <td>0.01%</td>
-                            <td>0.00% (0B / 0B)</td>
-                            <td>-</td>
-                            <td>
-                              <button class="btn btn-sm btn-outline-info">
-                                <i class="fas fa-chart-bar"></i>
-                              </button>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>wordpress-docker-db-1</td>
-                            <td>linuxserver/mariadb</td>
-                            <td><span class="badge bg-success">Up 26 hours</span></td>
-                            <td>0.04%</td>
-                            <td>0.00% (0B / 0B)</td>
-                            <td>-</td>
-                            <td>
-                              <button class="btn btn-sm btn-outline-info">
-                                <i class="fas fa-chart-bar"></i>
-                              </button>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>watchtower</td>
-                            <td>containrrr/watchtower</td>
-                            <td><span class="badge bg-success">Up 2 days (healthy)</span></td>
-                            <td>0.00%</td>
-                            <td>0.00% (0B / 0B)</td>
-                            <td>-</td>
-                            <td>
-                              <button class="btn btn-sm btn-outline-info">
-                                <i class="fas fa-chart-bar"></i>
-                              </button>
-                            </td>
-                          </tr>
-                          <!-- Autres conteneurs... -->
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <script>
-              // Script pour gérer le repli/dépli du widget Docker
-              document.addEventListener('DOMContentLoaded', function() {
-                const toggleBtn = document.getElementById('docker-toggle-btn');
-                const dockerContent = document.getElementById('docker-content');
-                let isCollapsed = false;
-                
-                if (toggleBtn && dockerContent) {
-                  toggleBtn.addEventListener('click', function() {
-                    if (isCollapsed) {
-                      // Dépli
-                      dockerContent.style.display = 'block';
-                      toggleBtn.innerHTML = '<i class="fas fa-minus"></i>';
-                      isCollapsed = false;
-                    } else {
-                      // Repli
-                      dockerContent.style.display = 'none';
-                      toggleBtn.innerHTML = '<i class="fas fa-plus"></i>';
-                      isCollapsed = true;
-                    }
-                  });
-                }
-                
-                // Fonction pour mettre à jour les compteurs Docker
-                window.updateDockerCounters = function(running, total) {
-                  const runningCounter = document.getElementById('docker-counter-running');
-                  const totalCounter = document.getElementById('docker-counter-total');
-                  
-                  if (runningCounter) {
-                    runningCounter.textContent = running;
-                    runningCounter.className = running > 0 ? 'badge bg-success ms-2' : 'badge bg-secondary ms-2';
-                  }
-                  
-                  if (totalCounter) {
-                    totalCounter.textContent = total;
-                  }
-                };
-                
-                // Mettre à jour les compteurs avec les bonnes valeurs (6 conteneurs, dont 3 en cours d'exécution)
-                window.updateDockerCounters(3, 6);
-              });
-              </script>
-            </div>
-        </div>
-
-        <div class="row mt-4">
-            <!-- EarnApp Status -->
-            <div class="col-lg-12">
-                <div class="card">
-                    <div class="card-header">
-                        <i class="fas fa-money-bill-wave me-2"></i> EarnApp
-                        <button class="btn btn-sm btn-outline-light float-end" id="refresh-earnapp">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div id="earnapp-status">
-                                    Vérification du statut EarnApp...
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div id="earnapp-network">
-                                    <!-- Les statistiques réseau seront insérées ici -->
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <footer class="mt-4 mb-4 text-center text-muted">
-            <small>Tableau de bord Raspberry Pi &copy; 2025 | v1.1</small>
-        </footer>
-    </div>
-
-    <!-- Chargement des scripts modulaires -->
-    <script src="js/googlesheet.js"></script>
-    <script src="js/main.js"></script>
-    <script src="js/cpu.js"></script>
-    <script src="js/memory.js"></script>
-    <script src="js/storage.js"></script>
-    <script src="js/network.js"></script>
-    <script src="js/docker.js"></script>
-    <script src="js/earnapp.js"></script>
-    <script src="js/vpn.js"></script>
-    <script src="js/dateinfo.js"></script>
-    <script src="js/weather.js"></script>
-    <script src="js/theme-switcher.js"></script>
-    <script src="js/chart-theme.js"></script>
 </body>
 </html>

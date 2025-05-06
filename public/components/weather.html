@@ -1,0 +1,72 @@
+<!-- Composant Météo -->
+<div class="card-header">
+    <i class="fas fa-microchip me-2"></i> Météo
+</div>
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-cloud me-2"></i> 
+            <span>Météo Saint Laurent Blangy</span>
+            <span id="weather-temp-collapsed" class="ms-3 fw-bold">16.4°C</span>
+        </div>
+        <div class="d-flex">
+            <button id="refresh-weather" class="btn btn-sm btn-outline-light me-2" title="Rafraîchir les données météo">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+            <button id="weather-toggle-btn" class="btn btn-sm btn-outline-light" title="Réduire/Agrandir">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+    </div>
+    
+    <div id="weather-content" style="display: none;">
+        <div class="card-body">
+            <div id="weather-error" class="alert alert-danger" style="display: none;"></div>
+            
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center">
+                <!-- Affichage principal -->
+                <div class="d-flex align-items-center mb-3 mb-md-0">
+                    <div class="me-3">
+                        <i id="weather-icon" class="fas fa-sun display-5"></i>
+                    </div>
+                    <div>
+                        <div id="weather-temp" class="display-4 fw-bold">16.4°C</div>
+                        <div id="weather-desc" class="text-muted">principalement dégagé</div>
+                    </div>
+                </div>
+                
+                <!-- Affichage détails -->
+                <div class="d-flex flex-wrap justify-content-between">
+                    <div class="me-4 mb-2">
+                        <i class="fas fa-thermometer-half me-2"></i> Ressenti: 
+                        <span id="weather-feels" class="fw-bold">12.5°C</span>
+                    </div>
+                    <div class="me-4 mb-2">
+                        <i class="fas fa-tint me-2"></i> Humidité: 
+                        <span id="weather-humidity" class="fw-bold">32%</span>
+                    </div>
+                    <div class="me-4 mb-2">
+                        <i class="fas fa-wind me-2"></i> Vent: 
+                        <span id="weather-wind" class="fw-bold">16.6 m/s</span>
+                    </div>
+                    <div class="me-4 mb-2">
+                        <i class="fas fa-tachometer-alt me-2"></i> Pression: 
+                        <span id="weather-pressure" class="fw-bold">1017.1 hPa</span>
+                    </div>
+                    <div class="me-4 mb-2">
+                        <i class="fas fa-arrow-up me-2"></i> Max: 
+                        <span id="weather-temp-max" class="fw-bold">16.9°C</span>
+                    </div>
+                    <div class="mb-2">
+                        <i class="fas fa-arrow-down me-2"></i> Min: 
+                        <span id="weather-temp-min" class="fw-bold">4.8°C</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-footer text-muted">
+            <small>Dernière mise à jour: <span id="weather-last-update">16:01:48</span></small>
+        </div>
+    </div>
+</div>

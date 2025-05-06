@@ -1,8 +1,20 @@
 // storage.js - Module pour la gestion des statistiques de stockage
 
 window.StorageModule = (function() {
+    // Vérifier si les éléments DOM requis sont présents
+    function checkRequiredElements() {
+        return document.getElementById('disk-info');
+    }
+    
     // Chargement des informations de stockage
     async function loadStorageInfo() {
+        // Vérifier si les éléments requis sont présents
+        if (!checkRequiredElements()) {
+            window.DashboardUtils.logDebug('Composant stockage non chargé, nouvelle tentative dans 500ms');
+            setTimeout(loadStorageInfo, 500);
+            return;
+        }
+        
         try {
             const response = await fetch(`${window.DashboardUtils.config.API_BASE_URL}/system`);
             if (!response.ok) {
@@ -47,12 +59,43 @@ window.StorageModule = (function() {
             window.DashboardUtils.updateTime();
         } catch (error) {
             window.DashboardUtils.logError('Erreur de chargement des informations de stockage:', error);
+            
+            // Afficher un message d'erreur
+            const diskContainer = document.getElementById('disk-info');
+            if (diskContainer) {
+                diskContainer.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Erreur lors du chargement des informations de stockage
+                    </div>
+                `;
+            }
         }
     }
     
     // Initialisation du module
     function init() {
         window.DashboardUtils.logDebug('Initialisation du module Stockage');
+        
+        // Écouter l'événement de chargement des composants si disponible
+        if (window.ComponentsManager) {
+            window.DashboardUtils.logDebug('ComponentsManager détecté, écoute des événements de chargement');
+            document.addEventListener('dashboardComponentLoaded', function(event) {
+                if (event.detail && event.detail.id === 'storage-component') {
+                    window.DashboardUtils.logDebug('Composant stockage chargé, initialisation du module stockage');
+                    setTimeout(loadStorageInfo, 200);
+                }
+            });
+        } else {
+            // Initialisation classique
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function() {
+                    setTimeout(loadStorageInfo, 500);
+                });
+            } else {
+                setTimeout(loadStorageInfo, 500);
+            }
+        }
     }
     
     // Appel de l'initialisation
@@ -60,6 +103,7 @@ window.StorageModule = (function() {
     
     // Interface publique du module
     return {
-        loadStorageInfo
+        loadStorageInfo,
+        refresh: loadStorageInfo
     };
 })();

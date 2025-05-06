@@ -1,0 +1,61 @@
+<!-- Composant EarnApp -->
+<div class="card-header">
+    <i class="fas fa-microchip me-2"></i> EarnApp
+</div>
+<div class="row mt-4">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-money-bill-wave me-2"></i> EarnApp
+                <button class="btn btn-sm btn-outline-light float-end" id="refresh-earnapp">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div id="earnapp-status">
+                            <div class="alert alert-success">EarnApp est en cours d'exécution</div>
+                            <div class="mt-3"><strong>Derniers logs:</strong></div>
+                            <div class="small" style="max-height: 150px; overflow-y: auto;">
+                                <div class="text-muted">Connecting to EarnApp network...</div>
+                                <div class="text-muted">Connection established</div>
+                                <div class="text-muted">Bandwidth shared: 245 MB</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div id="earnapp-network">
+                            <div class="card mb-3">
+                                <div class="card-header bg-info text-white">
+                                    <i class="fas fa-network-wired me-2"></i> Trafic réseau
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <div>
+                                            <i class="fas fa-arrow-down text-success"></i> Téléchargement:
+                                        </div>
+                                        <div>
+                                            <strong>0.42 KiB/s</strong>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <i class="fas fa-arrow-up text-danger"></i> Envoi:
+                                        </div>
+                                        <div>
+                                            <strong>0.31 KiB/s</strong>
+                                        </div>
+                                    </div>
+                                    <div class="text-muted small mt-2">
+                                        <em>Type de mesure: estimate</em>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

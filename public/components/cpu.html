@@ -1,0 +1,25 @@
+<!-- Composant CPU -->
+<div class="card-header">
+    <i class="fas fa-microchip me-2"></i> CPU
+</div>
+<div class="col-md-4">
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-microchip me-2"></i> CPU
+        </div>
+        <div class="card-body">
+            <div class="metric">
+                <div class="metric-value" id="cpu-load">0%</div>
+                <div class="metric-label">Utilisation CPU</div>
+            </div>
+            <div class="progress mb-3">
+                <div id="cpu-progress" class="progress-bar bg-primary" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            <div class="d-flex justify-content-between">
+                <div class="small text-muted" id="cpu-model">Modèle: --</div>
+                <div class="small text-muted" id="cpu-cores">Cœurs: --</div>
+            </div>
+            <div class="small text-muted" id="cpu-temp">Température: -- °C</div>
+        </div>
+    </div>
+</div>
